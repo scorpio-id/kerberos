@@ -1,8 +1,20 @@
 package main
 
-import "fmt"
+import (
+	"log"
+	"net/http"
+
+	"github.com/scorpio-id/kerberos/internal/config"
+	"github.com/scorpio-id/kerberos/internal/transport"
+)
 
 func main() {
-	// TODO - add gorilla mux
-	fmt.Println("lie for you, die for you, paint the sky for you")
+	// parse local config (could be added as cmd line arg)
+	cfg := config.NewConfig("internal/config/local.yml")
+
+	// create a new mux router
+	router := transport.NewRouter(cfg)
+
+	// start the server
+	log.Fatal(http.ListenAndServe(":"+cfg.Server.Port, router))
 }

@@ -1,0 +1,9 @@
+# server configuration
+server:
+  host: "http://127.0.0.1"
+  port: 8081
+
+oauth:
+  enabled: False
+  trusted_issuers:
+    - "http://localhost:8082/jwks"
