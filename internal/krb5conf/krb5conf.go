@@ -508,6 +508,12 @@ func (c *Krb5Config) ResolveRealm(domainName string) string {
 	return c.LibDefaults.DefaultRealm
 }
 
+// ToString convert Krb5Config to string
+func (c *Krb5Config) ToString() string {
+	// TODO
+	return ""
+}
+
 // Load the KRB5 configuration from the specified file path.
 func Load(cfgPath string) (*Krb5Config, error) {
 	fh, err := os.Open(cfgPath)
@@ -725,20 +731,7 @@ func (krb5 *Krb5Config) Krb5ConfHandler(w http.ResponseWriter, r *http.Request) 
 	// sets return file name to krb5.conf
 	w.Header().Set("Content-Disposition", "attachment; filename=krb5.conf")
 
-	libdefaults := []byte(fmt.Sprintf("%v", krb5.LibDefaults))
-
-	// default configuration for supported encryption and hashing schemes
-	w.Write(libdefaults)
-
-	realms := []byte(fmt.Sprintf("%v", krb5.Realms))
-
-	// default configuration for kerberos realms of trust
-	w.Write(realms)
-
-	mappings := []byte(fmt.Sprintf("%v", krb5.DomainRealm))
-
-	// default configuration for domain/realm mappings
-	w.Write(mappings)
+	w.Write([]byte(krb5.ToString()))
 
 	w.WriteHeader(http.StatusOK)
 }
