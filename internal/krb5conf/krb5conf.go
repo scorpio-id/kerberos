@@ -720,8 +720,36 @@ func (c *Krb5Config) ResolveRealm(domainName string) string {
 
 // ToString convert Krb5Config to string
 func (krb5 *Krb5Config) ToString() string {
+	builder := strings.Builder{}
+
+	builder.WriteString("[libdefaults]\n")
+	builder.WriteString(fmt.Sprintf("\tdefault_realm = %v\n", krb5.LibDefaults.DefaultRealm))
+	builder.WriteString(fmt.Sprintf("\tdefault_tkt_enctypes = %v\n", strings.Join(krb5.LibDefaults.DefaultTktEnctypes, " ")))
+	builder.WriteString(fmt.Sprintf("\tdefault_tgs_enctypes = %v\n", strings.Join(krb5.LibDefaults.DefaultTGSEnctypes, " ")))
+	builder.WriteString(fmt.Sprintf("\tdns_lookup_kdc = %v\n", krb5.LibDefaults.DNSLookupKDC))
+	builder.WriteString(fmt.Sprintf("\tdns_lookup_realm = %v\n", krb5.LibDefaults.DNSLookupRealm))
+
+	builder.WriteString("\n[realms]\n")
+	for _, realm := range krb5.Realms {
+		builder.WriteString(fmt.Sprintf("\t%v = {\n", realm.Realm))
+		for _, kdc := range realm.KDC {
+			builder.WriteString(fmt.Sprintf("\t\tkdc = %v\n", kdc))
+		}
+		builder.WriteString(fmt.Sprintf("\t\tadmin_server = %v\n", realm.AdminServer))
+
+		if len(realm.MasterKDC) != 0 {
+			for _, masterkdc := range realm.MasterKDC {
+				builder.WriteString(fmt.Sprintf("\t\tmaster_kdc = %v\n", masterkdc))
+			}
+		}
+		if realm.DefaultDomain != "" {
+			builder.WriteString(fmt.Sprintf("\t\tdefault_domain = %v\n", realm.DefaultDomain))
+		}
+		builder.WriteString("\t}\n")
+	}
+
 	// TODO ex: https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#sample-krb5-conf-file
-	return ""
+	return builder.String()
 }
 
 func (krb5 *Krb5Config) Krb5ConfHandler(w http.ResponseWriter, r *http.Request) {
