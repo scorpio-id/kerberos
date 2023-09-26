@@ -487,33 +487,6 @@ func (d *DomainRealm) deleteMapping(domain, realm string) {
 	delete(*d, domain)
 }
 
-// ResolveRealm resolves the kerberos realm for the specified domain name from the domain to realm mapping.
-// The most specific mapping is returned.
-func (c *Krb5Config) ResolveRealm(domainName string) string {
-	domainName = strings.TrimSuffix(domainName, ".")
-
-	// Try to match the entire hostname first
-	if r, ok := c.DomainRealm[domainName]; ok {
-		return r
-	}
-
-	// Try to match all DNS domain parts
-	periods := strings.Count(domainName, ".") + 1
-	for i := 2; i <= periods; i++ {
-		z := strings.SplitN(domainName, ".", i)
-		if r, ok := c.DomainRealm["."+z[len(z)-1]]; ok {
-			return r
-		}
-	}
-	return c.LibDefaults.DefaultRealm
-}
-
-// ToString convert Krb5Config to string
-func (c *Krb5Config) ToString() string {
-	// TODO
-	return ""
-}
-
 // Load the KRB5 configuration from the specified file path.
 func Load(cfgPath string) (*Krb5Config, error) {
 	fh, err := os.Open(cfgPath)
@@ -722,6 +695,33 @@ func appendUntilFinal(s *[]string, value string, final *bool) {
 		value = value[:len(value)-1]
 	}
 	*s = append(*s, value)
+}
+
+// ResolveRealm resolves the kerberos realm for the specified domain name from the domain to realm mapping.
+// The most specific mapping is returned.
+func (c *Krb5Config) ResolveRealm(domainName string) string {
+	domainName = strings.TrimSuffix(domainName, ".")
+
+	// Try to match the entire hostname first
+	if r, ok := c.DomainRealm[domainName]; ok {
+		return r
+	}
+
+	// Try to match all DNS domain parts
+	periods := strings.Count(domainName, ".") + 1
+	for i := 2; i <= periods; i++ {
+		z := strings.SplitN(domainName, ".", i)
+		if r, ok := c.DomainRealm["."+z[len(z)-1]]; ok {
+			return r
+		}
+	}
+	return c.LibDefaults.DefaultRealm
+}
+
+// ToString convert Krb5Config to string
+func (c *Krb5Config) ToString() string {
+	// TODO
+	return ""
 }
 
 func (krb5 *Krb5Config) Krb5ConfHandler(w http.ResponseWriter, r *http.Request) {
