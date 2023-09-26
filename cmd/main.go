@@ -14,18 +14,19 @@ func main() {
 	// parse local config (could be added as cmd line arg)
 	cfg := config.NewConfig("internal/config/local.yml")
 
-	// parse default kr5b.conf
+	// load default kr5b.conf
 	conf, err := os.ReadFile("config/krb5.conf")
 	if err != nil {
 		log.Fatalf("unable to load default krb5.conf: [%v]", err)
 	}
 
+	// parse default krb5.conf
 	krb5, err := krb5conf.NewConfigFromString(string(conf))
 	if err != nil {
 		log.Fatalf("inavlid krb5.conf: [%v]", err)
 	}
 
-	// create a new mux router using config and default krb5.conf
+	// create a new mux router using config and krb5.conf
 	router := transport.NewRouter(cfg, krb5)
 
 	// start the server
