@@ -10,9 +10,7 @@ import (
 )
 
 // NewRouter creates a new mux router with applied server
-func NewRouter(cfg config.Config) *mux.Router {
-
-	krb5 := krb5conf.NewKrb5Config()
+func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 
 	router := mux.NewRouter()
 
