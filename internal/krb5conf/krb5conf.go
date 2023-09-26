@@ -719,7 +719,7 @@ func (c *Krb5Config) ResolveRealm(domainName string) string {
 }
 
 // ToString convert Krb5Config to string
-func (c *Krb5Config) ToString() string {
+func (krb5 *Krb5Config) ToString() string {
 	// TODO ex: https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#sample-krb5-conf-file
 	return ""
 }
