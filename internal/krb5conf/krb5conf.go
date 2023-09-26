@@ -732,6 +732,4 @@ func (krb5 *Krb5Config) Krb5ConfHandler(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Disposition", "attachment; filename=krb5.conf")
 
 	w.Write([]byte(krb5.ToString()))
-
-	w.WriteHeader(http.StatusOK)
 }
