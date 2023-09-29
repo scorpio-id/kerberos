@@ -719,6 +719,7 @@ func (c *Krb5Config) ResolveRealm(domainName string) string {
 }
 
 // ToString convert Krb5Config to string
+// ex: https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#sample-krb5-conf-file
 func (krb5 *Krb5Config) ToString() string {
 	builder := strings.Builder{}
 
@@ -748,7 +749,15 @@ func (krb5 *Krb5Config) ToString() string {
 		builder.WriteString("\t}\n")
 	}
 
-	// TODO ex: https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html#sample-krb5-conf-file
+	// write domain-realm mappings
+	builder.WriteString("\n[default_realm]\n")
+	for domain, realm := range krb5.DomainRealm {
+		builder.WriteString(fmt.Sprintf("\t%v = %v\n", domain, realm))
+	}
+
+	// TODO implement capaths in Krb5Config
+	// builder.WriteString("\n[capaths]\n")
+
 	return builder.String()
 }
 
@@ -761,3 +770,4 @@ func (krb5 *Krb5Config) Krb5ConfHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.Write([]byte(krb5.ToString()))
 }
+
