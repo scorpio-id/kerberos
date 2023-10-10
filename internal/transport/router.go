@@ -14,6 +14,9 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 
 	router := mux.NewRouter()
 
+	// create krb5client to login to KDC
+	krb5client := krb5client.
+
 	router.HandleFunc("/krb5conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
 
 	// apply OAuth middleware if enabled
