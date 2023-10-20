@@ -40,6 +40,8 @@ func (om *OAuthMiddleware) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
+		r.Header.Add("subject", claims.Subject)
+
 		// TODO - inspect claims, and add relevant metadata to request headers
 		log.Println(claims)
 
