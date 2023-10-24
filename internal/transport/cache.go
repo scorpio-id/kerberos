@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/jcmturner/gokrb5.v7/messages"
+	"github.com/scorpio-id/kerberos/internal/messages"
 	"github.com/scorpio-id/kerberos/internal/types"
 )
 

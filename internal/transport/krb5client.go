@@ -10,6 +10,9 @@ import (
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
 	"github.com/scorpio-id/kerberos/internal/messages"
 	"github.com/scorpio-id/kerberos/internal/types"
+	"github.com/scorpio-id/kerberos/internal/iana/errorcode"
+	"github.com/scorpio-id/kerberos/internal/crypto"
+	"github.com/scorpio-id/kerberos/internal/krberror"
 )
 
 // Client side configuration and state.

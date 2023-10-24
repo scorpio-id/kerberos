@@ -1,7 +1,7 @@
 package types
 
 // TODO: original did not use standard ASN1 https://github.com/jcmturner/gokrb5/blob/master/types/Cryptosystem.go#L4
-import "encoding/asn1"
+import "github.com/jcmturner/gofork/encoding/asn1"
 
 // Reference: https://www.ietf.org/rfc/rfc4120.txt
 // Section: 5.2.6

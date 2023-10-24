@@ -2,24 +2,23 @@ package messages
 
 import (
 	"crypto/rand"
-	"encoding/asn1"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/jcmturner/gofork/encoding/asn1"
+	"github.com/scorpio-id/kerberos/internal/asn1tools"
+	"github.com/scorpio-id/kerberos/internal/crypto"
+	"github.com/scorpio-id/kerberos/internal/iana"
+	"github.com/scorpio-id/kerberos/internal/iana/adtype"
+	"github.com/scorpio-id/kerberos/internal/iana/asnAppTag"
+	"github.com/scorpio-id/kerberos/internal/iana/errorcode"
+	"github.com/scorpio-id/kerberos/internal/iana/flags"
+	"github.com/scorpio-id/kerberos/internal/iana/keyusage"
 	"github.com/scorpio-id/kerberos/internal/keytab"
+	"github.com/scorpio-id/kerberos/internal/krberror"
+	"github.com/scorpio-id/kerberos/internal/pac"
 	"github.com/scorpio-id/kerberos/internal/types"
-
-	"gopkg.in/jcmturner/gokrb5.v7/asn1tools"
-	"gopkg.in/jcmturner/gokrb5.v7/crypto"
-	"gopkg.in/jcmturner/gokrb5.v7/iana"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/adtype"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/asnAppTag"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/errorcode"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/flags"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/keyusage"
-	"gopkg.in/jcmturner/gokrb5.v7/krberror"
-	"gopkg.in/jcmturner/gokrb5.v7/pac"
 )
 
 // Reference: https://www.ietf.org/rfc/rfc4120.txt

@@ -4,7 +4,7 @@ package types
 // Section: 5.2.8
 
 // FIXME: Trying to use Jcmturner ASN1, need to use original
-import "encoding/asn1"
+import "github.com/jcmturner/gofork/encoding/asn1"
 
 // NewKrbFlags returns an ASN1 BitString struct of the right size for KrbFlags.
 func NewKrbFlags() asn1.BitString {

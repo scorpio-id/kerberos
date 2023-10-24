@@ -2,9 +2,6 @@ package credentials
 
 import (
 	"bytes"
-
-	// FIXME: Not original ASN1 package
-	"encoding/asn1"
 	"encoding/binary"
 	"errors"
 	"io/ioutil"
@@ -12,6 +9,7 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/jcmturner/gofork/encoding/asn1"
 	"github.com/scorpio-id/kerberos/internal/types"
 )
 
