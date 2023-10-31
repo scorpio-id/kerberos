@@ -7,6 +7,7 @@ require (
 	github.com/scorpio-id/oauth v0.1.3
 	github.com/stretchr/testify v1.8.2
 	gopkg.in/jcmturner/aescts.v1 v1.0.1
+	gopkg.in/jcmturner/dnsutils.v1 v1.0.1
 	gopkg.in/jcmturner/rpc.v1 v1.1.0
 )
 

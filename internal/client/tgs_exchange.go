@@ -1,4 +1,4 @@
-package transport
+package client
 
 import (
 	"github.com/scorpio-id/kerberos/internal/iana/flags"

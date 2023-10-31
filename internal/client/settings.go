@@ -1,4 +1,4 @@
-package transport
+package client
 
 // FIXME: This file should be in a different package!
 
