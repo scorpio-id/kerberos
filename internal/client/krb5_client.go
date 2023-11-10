@@ -3,16 +3,18 @@ package client
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/scorpio-id/kerberos/internal/credentials"
+	"github.com/scorpio-id/kerberos/internal/crypto"
+	"github.com/scorpio-id/kerberos/internal/iana/errorcode"
 	"github.com/scorpio-id/kerberos/internal/keytab"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
+	"github.com/scorpio-id/kerberos/internal/krberror"
 	"github.com/scorpio-id/kerberos/internal/messages"
 	"github.com/scorpio-id/kerberos/internal/types"
-	"github.com/scorpio-id/kerberos/internal/iana/errorcode"
-	"github.com/scorpio-id/kerberos/internal/crypto"
-	"github.com/scorpio-id/kerberos/internal/krberror"
 )
 
 // Client side configuration and state.
@@ -235,4 +237,33 @@ func (cl *Client) Destroy() {
 	cl.cache.clear()
 	cl.Credentials = creds
 	cl.Log("client destroyed")
+}
+
+
+
+func (client *Client) Krb5TGTClientHandler(w http.ResponseWriter, r *http.Request) {
+	// return .conf file type
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	cname := types.PrincipalName{
+		NameType: 0,
+		NameString: []string{"scorpio"},
+	}
+	message, err := messages.NewASReqForTGT("SCORPIO.IO", client.Config, cname)
+	if err != nil{
+		log.Fatalf("%v", err)
+	}
+
+	// TODO: add realm to config.go
+	tgt, err := client.ASExchange("SCORPIO.IO", message, 0)
+	if err != nil{
+		log.Fatalf("%v", err)
+	}
+
+	bytes, err := tgt.Ticket.Marshal()
+	if err != nil{
+		log.Fatalf("%v", err)
+	}
+
+	w.Write(bytes)
 }
