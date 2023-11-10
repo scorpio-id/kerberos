@@ -2,6 +2,7 @@ package krb5conf
 
 import (
 	"bufio"
+	"encoding/asn1"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -15,8 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jcmturner/gofork/encoding/asn1"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/etypeID"
+	"github.com/scorpio-id/kerberos/internal/types"
 )
 
 // Krb5Config represents the KRB5 configuration.
@@ -600,7 +600,7 @@ func parseETypes(s []string, w bool) []int32 {
 				continue
 			}
 		}
-		i := etypeID.EtypeSupported(et)
+		i := types.EtypeSupported(et)
 		if i != 0 {
 			eti = append(eti, i)
 		}

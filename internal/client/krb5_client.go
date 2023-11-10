@@ -1,26 +1,26 @@
-package transport
+package client
 
 import (
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 	"time"
 
-	"gopkg.in/jcmturner/gokrb5.v7/config"
-	"gopkg.in/jcmturner/gokrb5.v7/credentials"
-	"gopkg.in/jcmturner/gokrb5.v7/crypto"
-	"gopkg.in/jcmturner/gokrb5.v7/crypto/etype"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/errorcode"
-	"gopkg.in/jcmturner/gokrb5.v7/iana/nametype"
-	"gopkg.in/jcmturner/gokrb5.v7/keytab"
-	"gopkg.in/jcmturner/gokrb5.v7/krberror"
-	"gopkg.in/jcmturner/gokrb5.v7/messages"
-	"gopkg.in/jcmturner/gokrb5.v7/types"
+	"github.com/scorpio-id/kerberos/internal/credentials"
+	"github.com/scorpio-id/kerberos/internal/crypto"
+	"github.com/scorpio-id/kerberos/internal/iana/errorcode"
+	"github.com/scorpio-id/kerberos/internal/keytab"
+	"github.com/scorpio-id/kerberos/internal/krb5conf"
+	"github.com/scorpio-id/kerberos/internal/krberror"
+	"github.com/scorpio-id/kerberos/internal/messages"
+	"github.com/scorpio-id/kerberos/internal/types"
 )
 
 // Client side configuration and state.
 type Client struct {
 	Credentials *credentials.Credentials
-	Config      *config.Config
+	Config      *krb5conf.Krb5Config
 	settings    *Settings
 	sessions    *sessions
 	cache       *Cache
@@ -28,7 +28,7 @@ type Client struct {
 
 // NewClientWithPassword creates a new client from a password credential.
 // Set the realm to empty string to use the default realm from config.
-func NewClientWithPassword(username, realm, password string, krb5conf *config.Config, settings ...func(*Settings)) *Client {
+func NewClientWithPassword(username, realm, password string, krb5conf *krb5conf.Krb5Config, settings ...func(*Settings)) *Client {
 	creds := credentials.New(username, realm)
 	return &Client{
 		Credentials: creds.WithPassword(password),
@@ -42,7 +42,7 @@ func NewClientWithPassword(username, realm, password string, krb5conf *config.Co
 }
 
 // NewClientWithKeytab creates a new client from a keytab credential.
-func NewClientWithKeytab(username, realm string, kt *keytab.Keytab, krb5conf *config.Config, settings ...func(*Settings)) *Client {
+func NewClientWithKeytab(username, realm string, kt *keytab.Keytab, krb5conf *krb5conf.Krb5Config, settings ...func(*Settings)) *Client {
 	creds := credentials.New(username, realm)
 	return &Client{
 		Credentials: creds.WithKeytab(kt),
@@ -58,7 +58,7 @@ func NewClientWithKeytab(username, realm string, kt *keytab.Keytab, krb5conf *co
 // NewClientFromCCache create a client from a populated client cache.
 //
 // WARNING: A client created from CCache does not automatically renew TGTs and a failure will occur after the TGT expires.
-func NewClientFromCCache(c *credentials.CCache, krb5conf *config.Config, settings ...func(*Settings)) (*Client, error) {
+func NewClientFromCCache(c *credentials.CCache, krb5conf *krb5conf.Krb5Config, settings ...func(*Settings)) (*Client, error) {
 	cl := &Client{
 		Credentials: c.GetClientCredentials(),
 		Config:      krb5conf,
@@ -69,7 +69,7 @@ func NewClientFromCCache(c *credentials.CCache, krb5conf *config.Config, setting
 		cache: NewCache(),
 	}
 	spn := types.PrincipalName{
-		NameType:   nametype.KRB_NT_SRV_INST,
+		NameType:   types.KRB_NT_SRV_INST,
 		NameString: []string{"krbtgt", c.DefaultPrincipal.Realm},
 	}
 	cred, ok := c.GetEntry(spn)
@@ -112,7 +112,7 @@ func NewClientFromCCache(c *credentials.CCache, krb5conf *config.Config, setting
 // If the client has both a keytab and a password defined the keytab is favoured as the source for the key
 // A KRBError can be passed in the event the KDC returns one of type KDC_ERR_PREAUTH_REQUIRED and is required to derive
 // the key for pre-authentication from the client's password. If a KRBError is not available, pass nil to this argument.
-func (cl *Client) Key(etype etype.EType, krberr *messages.KRBError) (types.EncryptionKey, error) {
+func (cl *Client) Key(etype types.EType, krberr *messages.KRBError) (types.EncryptionKey, error) {
 	if cl.Credentials.HasKeytab() && etype != nil {
 		return cl.Credentials.Keytab().GetEncryptionKey(cl.Credentials.CName(), cl.Credentials.Domain(), 0, etype.GetETypeID())
 	} else if cl.Credentials.HasPassword() {
@@ -217,7 +217,7 @@ func (cl *Client) realmLogin(realm string) error {
 	}
 
 	spn := types.PrincipalName{
-		NameType:   nametype.KRB_NT_SRV_INST,
+		NameType:   types.KRB_NT_SRV_INST,
 		NameString: []string{"krbtgt", realm},
 	}
 
@@ -237,4 +237,31 @@ func (cl *Client) Destroy() {
 	cl.cache.clear()
 	cl.Credentials = creds
 	cl.Log("client destroyed")
+}
+
+
+
+func (client *Client) Krb5TGTClientHandler(w http.ResponseWriter, r *http.Request) {
+	// return .conf file type
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, "scorpio/admin")
+
+	message, err := messages.NewASReqForTGT("SCORPIO.IO", client.Config, cname)
+	if err != nil{
+		log.Fatalf("%v", err)
+	}
+
+	// TODO: add realm to config.go
+	tgt, err := client.ASExchange("SCORPIO.IO", message, 1)
+	if err != nil{
+		log.Fatalf("%v", err)
+	}
+
+	bytes, err := tgt.Ticket.Marshal()
+	if err != nil{
+		log.Fatalf("%v", err)
+	}
+
+	w.Write(bytes)
 }
