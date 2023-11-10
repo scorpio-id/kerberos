@@ -245,17 +245,15 @@ func (client *Client) Krb5TGTClientHandler(w http.ResponseWriter, r *http.Reques
 	// return .conf file type
 	w.Header().Set("Content-Type", "application/octet-stream")
 
-	cname := types.PrincipalName{
-		NameType: 0,
-		NameString: []string{"scorpio"},
-	}
+	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, "scorpio/admin")
+
 	message, err := messages.NewASReqForTGT("SCORPIO.IO", client.Config, cname)
 	if err != nil{
 		log.Fatalf("%v", err)
 	}
 
 	// TODO: add realm to config.go
-	tgt, err := client.ASExchange("SCORPIO.IO", message, 0)
+	tgt, err := client.ASExchange("SCORPIO.IO", message, 1)
 	if err != nil{
 		log.Fatalf("%v", err)
 	}
