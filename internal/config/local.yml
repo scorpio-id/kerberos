@@ -4,6 +4,6 @@ server:
   port: 8083
 
 oauth:
-  enabled: False
+  enabled: True
   trusted_issuers:
     - "http://localhost:8082/jwks"

@@ -17,7 +17,7 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 	router := mux.NewRouter()
 
 	// create krb5client to login to KDC
-	admin := client.NewClientWithPassword("scorpio/admin", "SCORPIO.IO", "resetme", krb5)
+	admin := client.NewClientWithPassword("scorpio", "SCORPIO.IO", "resetme", krb5)
 
 	// TODO - possibly move into handler and login
 	err := admin.Login()
