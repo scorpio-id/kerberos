@@ -239,21 +239,24 @@ func (cl *Client) Destroy() {
 	cl.Log("client destroyed")
 }
 
-
-
-func (client *Client) Krb5TGTClientHandler(w http.ResponseWriter, r *http.Request) {
+// FIXME - you don't need a client, you just need a krb5config
+func (c *Client) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	// return .conf file type
 	w.Header().Set("Content-Type", "application/octet-stream")
 
-	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, "scorpio/admin")
+	c2 := NewClientWithPassword(r.Header.Get("subject"), "SCORPIO.IO", "resetme", c.Config) 
 
-	message, err := messages.NewASReqForTGT("SCORPIO.IO", client.Config, cname)
+	c2.Login()
+
+	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, r.Header.Get("subject"))
+
+	message, err := messages.NewASReqForTGT("SCORPIO.IO", c2.Config, cname)
 	if err != nil{
 		log.Fatalf("%v", err)
 	}
 
 	// TODO: add realm to config.go
-	tgt, err := client.ASExchange("SCORPIO.IO", message, 1)
+	tgt, err := c2.ASExchange("SCORPIO.IO", message, 1)
 	if err != nil{
 		log.Fatalf("%v", err)
 	}
