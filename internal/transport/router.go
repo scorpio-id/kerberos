@@ -8,6 +8,7 @@ import (
 
 	"github.com/scorpio-id/kerberos/internal/client"
 	"github.com/scorpio-id/kerberos/internal/config"
+	"github.com/scorpio-id/kerberos/internal/kadmin"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
 )
 
@@ -27,6 +28,7 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 
 	router.HandleFunc("/krb5conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/tgt", admin.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/principal", kadmin.PrincipalHandler).Methods(http.MethodPost, http.MethodOptions)
 
 	// apply OAuth middleware if enabled
 	if cfg.OAuth.Enabled {
