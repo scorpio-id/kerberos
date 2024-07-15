@@ -15,7 +15,7 @@ type Kadmin struct {
 
 func (kadmin *Kadmin) CreatePrincipal(principal string, password string) error {
 	// set up command 
-	cmd := exec.Command("kadmin", "-w", "resetme", "-q", "add_principal", "-pw", password, principal)
+	cmd := exec.Command("kadmin", "-w", "resetme", "add_principal", "-pw", password, principal)
     var out bytes.Buffer
     cmd.Stdout = &out
 
@@ -40,7 +40,7 @@ func PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 		Password: "resetme",
 	}
 
-	err := kadmin.CreatePrincipal("hi-from-golang", "resetme")
+	err := kadmin.CreatePrincipal("hello-from-golang", "resetme")
 	if err != nil {
 		fmt.Println(err)
 		w.WriteHeader(500)
