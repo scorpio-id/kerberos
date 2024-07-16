@@ -91,14 +91,31 @@ func (kadmin *Kadmin) ChangePrincipalPassword(principal string, newPassword stri
 }
 
 // web handler
-func PrincipalHandler(w http.ResponseWriter, r *http.Request) {
-	kadmin := Kadmin {
-		password: "resetme",
+func (kadmin *Kadmin) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
 	}
 
-	err := kadmin.CreatePrincipal("hello-from-golang", "resetme")
-	if err != nil {
-		fmt.Println(err)
-		w.WriteHeader(500)
+	principal := r.FormValue("principal")
+
+	if r.Method == "POST"{
+		err := kadmin.CreatePrincipal("hello-from-golang", "resetme")
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+		}
+
+		return
+	}
+
+	if r.Method == "DELETE"{
+		err := kadmin.DeletePrincipal("hello-from-golang")
+		if err != nil {
+			fmt.Println(err)
+			w.WriteHeader(500)
+		}
+
+		w.WriteHeader(200)
 	}
 }
