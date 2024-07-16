@@ -97,7 +97,10 @@ func (kadmin *Kadmin) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	principal := r.FormValue("principal")
+	principal := r.FormValue("principal")	
+	if principal == "" {
+		w.WriteHeader(http.StatusBadRequest)
+	}
 
 	if r.Method == "POST"{
 		err := kadmin.CreatePrincipal("hello-from-golang", "resetme")
@@ -106,7 +109,7 @@ func (kadmin *Kadmin) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 		}
 
-		return
+		w.WriteHeader(http.StatusOK)
 	}
 
 	if r.Method == "DELETE"{
@@ -116,6 +119,6 @@ func (kadmin *Kadmin) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 		}
 
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	}
 }
