@@ -108,8 +108,6 @@ func (kadmin *Kadmin) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			w.WriteHeader(500)
 		}
-
-		w.WriteHeader(http.StatusOK)
 	}
 
 	if r.Method == "DELETE"{
@@ -118,7 +116,5 @@ func (kadmin *Kadmin) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 			w.WriteHeader(500)
 		}
-
-		w.WriteHeader(http.StatusOK)
 	}
 }
