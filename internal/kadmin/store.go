@@ -20,6 +20,7 @@ type Store struct {
 	mu       sync.RWMutex
 }
 
+// TODO: need previous pass, curent pass, next pass ...
 type Metadata struct {
 	clientID string
 	encpass  string
@@ -92,6 +93,6 @@ func (store *Store) Add(clientID string, principal string, password string) {
 		expires: time.Now().Add(store.rotation),
 	}
 
-	// add principal to data store, key = principal name / value = metadata
+	// add principal to data store. key = principal name, value = metadata
 	store.data[principal] = metadata
 } 

@@ -16,6 +16,7 @@ type Kadmin struct {
 
 func NewKadmin(password string) *Kadmin {
 	return &Kadmin{
+		// FIXME: was this always wrong? is this even required?
 		password: "password",
 		cmd: &exec.Cmd{},
 	}
