@@ -27,12 +27,12 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 	}
 
 	// instance of kadmin
-	// TODO: Remove plaintext password
-	command := kadmin.NewKadmin("resetme")
+	// TODO: remove plaintext password
+	vault := kadmin.NewVault("resetme")
 
 	router.HandleFunc("/krb5conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/tgt", admin.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
-	router.HandleFunc("/principal", command.PrincipalHandler).Methods(http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodOptions)
+	router.HandleFunc("/principal", vault.PrincipalHandler).Methods(http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodOptions)
 
 	// apply OAuth middleware if enabled
 	if cfg.OAuth.Enabled {
