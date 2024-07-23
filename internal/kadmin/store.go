@@ -20,7 +20,7 @@ type Store struct {
 	mu       sync.RWMutex
 }
 
-// TODO: need previous pass, curent pass, next pass ...
+// TODO: need previous pass, current pass, next pass ...
 type Metadata struct {
 	clientID string
 	encpass  string

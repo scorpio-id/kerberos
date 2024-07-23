@@ -48,6 +48,11 @@ func (vault *Vault) CreatePrincipal(principal string, password string) error {
 		return err
 	}
 
+	// TODO
+	// 1. generate a random password instead of accepting an argument
+	// 1.5 check to ensure the principal name is unique and conforms to MIT standards
+	// 2. store the principal with metadata
+
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
 
@@ -70,6 +75,8 @@ func (vault *Vault) DeletePrincipal(principal string) error {
 	if err != nil {
 		return err
 	}
+	
+	// TODO: remove from store
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
@@ -92,6 +99,8 @@ func (vault *Vault) ChangePrincipalPassword(principal string, newpass string) er
 	if err != nil {
 		return err
 	}
+	
+	// TODO: update store
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
