@@ -6,19 +6,30 @@ import (
 	"net/http"
 	"os/exec"
 	"sync"
+
+	"github.com/scorpio-id/kerberos/internal/config"
 )
 
 type Vault struct {
+	store    *Store
 	password string
 	cmd      *exec.Cmd
 	mu       sync.RWMutex
 }
 
-func NewVault(password string) *Vault {
-	return &Vault{
+func NewVault(cfg config.Config, password string) (*Vault, error) {
+	store, err := NewStore(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	vault := &Vault{
+		store: store,
 		password: password,
 		cmd:      &exec.Cmd{},
 	}
+
+	return vault, nil
 }
 
 func (vault *Vault) CreatePrincipal(principal string, password string) error {

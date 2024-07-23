@@ -26,9 +26,12 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 		log.Fatalf("%v", err)
 	}
 
-	// instance of kadmin
+	// must have access to kadmin
 	// TODO: remove plaintext password
-	vault := kadmin.NewVault("resetme")
+	vault, err := kadmin.NewVault(cfg, "resetme")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	router.HandleFunc("/krb5conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/tgt", admin.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
