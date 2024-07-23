@@ -16,7 +16,6 @@ type Vault struct {
 
 func NewVault(password string) *Vault {
 	return &Vault{
-		// FIXME: was this always wrong? is this even required?
 		password: password,
 		cmd:      &exec.Cmd{},
 	}
