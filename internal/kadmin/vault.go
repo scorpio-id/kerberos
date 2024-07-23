@@ -3,12 +3,16 @@ package kadmin
 import (
 	"bytes"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os/exec"
 	"sync"
 
 	"github.com/scorpio-id/kerberos/internal/config"
 )
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
 
 type Vault struct {
 	store    *Store
@@ -32,10 +36,23 @@ func NewVault(cfg config.Config, password string) (*Vault, error) {
 	return vault, nil
 }
 
-func (vault *Vault) CreatePrincipal(principal string, password string) error {
+// TODO: Add length and runes to config
+func generatePassword(n int) string {
+    b := make([]rune, n)
+    for i := range b {
+        b[i] = letterRunes[rand.Intn(len(letterRunes))]
+    }
+    return string(b)
+}
+
+
+func (vault *Vault) CreatePrincipal(principal string) error {
 	// lock & unlock kadmin
 	vault.mu.Lock()
 	defer vault.mu.Unlock()
+
+	// TODO check to ensure the principal name is unique and conforms to MIT standards
+	password := generatePassword(18)
 
 	// set up command
 	vault.cmd = exec.Command("kadmin", "-w", vault.password, "add_principal", "-pw", password, principal)
@@ -48,10 +65,8 @@ func (vault *Vault) CreatePrincipal(principal string, password string) error {
 		return err
 	}
 
-	// TODO
-	// 1. generate a random password instead of accepting an argument
-	// 1.5 check to ensure the principal name is unique and conforms to MIT standards
-	// 2. store the principal with metadata
+	// stores the principal with metadata
+	vault.store.Add("scorpio", principal, password)
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
@@ -76,7 +91,8 @@ func (vault *Vault) DeletePrincipal(principal string) error {
 		return err
 	}
 	
-	// TODO: remove from store
+	// remove principal from store
+	vault.store.Delete(principal)
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
@@ -122,7 +138,7 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == "POST" {
-		err := vault.CreatePrincipal(principal, "resetme")
+		err := vault.CreatePrincipal(principal)
 		if err != nil {
 			fmt.Println(err)
 			w.WriteHeader(http.StatusInternalServerError)

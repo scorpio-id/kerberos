@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"sync"
 	"time"
 
@@ -95,4 +96,13 @@ func (store *Store) Add(clientID string, principal string, password string) {
 
 	// add principal to data store. key = principal name, value = metadata
 	store.data[principal] = metadata
+
+	fmt.Printf("ciphertext: [%v]", ciphertext)
 } 
+
+func (store *Store) Delete(principal string) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	delete(store.data, principal)
+}
