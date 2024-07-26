@@ -200,9 +200,14 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	// log in
 	// start by retrieving password
-	login := client.NewClientWithPassword(principal, "SCORPIO.IO", "resetme", vault.krb5)
+	password, err := vault.RetrievePassword(principal)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	// log in
+	login := client.NewClientWithPassword(principal, "SCORPIO.IO", password, vault.krb5)
 
 	// old way: r.Header.Get("subject")
 	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, principal)
