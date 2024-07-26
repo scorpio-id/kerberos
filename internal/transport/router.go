@@ -6,9 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/scorpio-id/kerberos/internal/client"
 	"github.com/scorpio-id/kerberos/internal/config"
-	"github.com/scorpio-id/kerberos/internal/kadmin"
+	"github.com/scorpio-id/kerberos/internal/password"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
 )
 
@@ -18,23 +17,23 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 	router := mux.NewRouter()
 
 	// create krb5client to login to KDC
-	admin := client.NewClientWithPassword("scorpio", "SCORPIO.IO", "resetme", krb5)
+	// admin := client.NewClientWithPassword("scorpio", "SCORPIO.IO", "resetme", krb5)
 
 	// TODO - possibly move into handler and login
-	err := admin.Login()
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	// err := admin.Login()
+	// if err != nil {
+	// 	log.Fatalf("%v", err)
+	// }
 
 	// must have access to kadmin
 	// TODO: remove plaintext password
-	vault, err := kadmin.NewVault(cfg, "resetme")
+	vault, err := password.NewVault(cfg, krb5, "resetme")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	router.HandleFunc("/krb5conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
-	router.HandleFunc("/tgt", admin.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
+	router.HandleFunc("/tgt", vault.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
 	router.HandleFunc("/principal", vault.PrincipalHandler).Methods(http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodOptions)
 
 	// apply OAuth middleware if enabled

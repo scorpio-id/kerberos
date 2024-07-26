@@ -1,4 +1,4 @@
-package kadmin
+package password
 
 import (
 	"crypto/aes"
