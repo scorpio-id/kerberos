@@ -143,6 +143,8 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
     	return "", err
 	}
 
+	fmt.Println("decoded: " + string(decoded))
+
 	plaintext, err := vault.store.gcm.Open(nil, decoded[:vault.store.gcm.NonceSize()], decoded[vault.store.gcm.NonceSize():], nil)
 	if err != nil {
     	fmt.Println("error decrypting ciphertext", err)
