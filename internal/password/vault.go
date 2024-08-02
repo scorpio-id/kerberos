@@ -17,12 +17,10 @@ import (
 	"github.com/scorpio-id/kerberos/internal/types"
 )
 
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-
 type Vault struct {
 	store    *Store
 	password string
+	plength  int
 	krb5     *krb5conf.Krb5Config
 	cmd      *exec.Cmd
 	mu       sync.RWMutex
@@ -35,22 +33,14 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 	}
 
 	vault := &Vault{
-		store: store,
+		store:    store,
 		password: password,
-		krb5: krb5,
+		plength:  cfg.Realm.PasswordLength,
+		krb5:     krb5,
 		cmd:      &exec.Cmd{},
 	}
 
 	return vault, nil
-}
-
-// TODO: Add length and runes to config
-func generatePassword(n int) string {
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = letterRunes[rand.Intn(len(letterRunes))]
-    }
-    return string(b)
 }
 
 
@@ -60,7 +50,7 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	defer vault.mu.Unlock()
 
 	// TODO check to ensure the principal name is unique and conforms to MIT standards
-	password := generatePassword(18)
+	password := generatePassword(vault.plength)
 
 	// set up command
 	vault.cmd = exec.Command("kadmin", "-w", vault.password, "add_principal", "-pw", password, principal)
@@ -74,6 +64,7 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	}
 
 	// stores the principal with metadata
+	// FIXME: accept clientID
 	vault.store.Add("scorpio", principal, password)
 
 	// reset command buffer
@@ -150,6 +141,15 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	}
 
 	return string(plaintext), nil
+}
+
+// TODO: Add length and runes to config
+func generatePassword(n int) string {
+    b := make([]rune, n)
+    for i := range b {
+        b[i] = letterRunes[rand.Intn(len(letterRunes))]
+    }
+    return string(b)
 }
 
 // PrincipalHandler

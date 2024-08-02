@@ -11,3 +11,4 @@ oauth:
 realm:
   name: "SCORPIO.IO"
   password_rotation: "1h"
+  password_length: 18

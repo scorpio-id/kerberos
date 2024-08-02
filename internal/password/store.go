@@ -12,6 +12,8 @@ import (
 	"github.com/scorpio-id/kerberos/internal/config"
 )
 
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
 type Store struct {
 	key      []byte
 	block    cipher.Block

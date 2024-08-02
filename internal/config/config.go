@@ -19,6 +19,7 @@ type Config struct {
 	Realm struct {
 		Name             string `yaml:"name"`
 		PasswordRotation string `yaml:"password_rotation"`
+		PasswordLength   int    `yaml:"password_length"`
 	} `yaml:"realm"`
 }
 
