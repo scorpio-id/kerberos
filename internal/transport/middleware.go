@@ -1,7 +1,6 @@
 package transport
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -41,7 +40,10 @@ func (om *OAuthMiddleware) Middleware(next http.Handler) http.Handler {
 		}
 
 		// TODO - inspect claims, and add relevant metadata to request headers
-		log.Println(claims)
+		// log.Println(claims)
+
+		// add JWT subject to HTTP request header
+		r.Header.Add("subject", claims.Subject)
 
 		// continue to originally requested handler
 		next.ServeHTTP(w, r)

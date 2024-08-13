@@ -16,6 +16,11 @@ type Config struct {
 		Enabled        bool     `yaml:"enabled"`
 		TrustedIssuers []string `yaml:"trusted_issuers"`
 	} `yaml:"oauth"`
+	Realm struct {
+		Name             string `yaml:"name"`
+		PasswordRotation string `yaml:"password_rotation"`
+		PasswordLength   int    `yaml:"password_length"`
+	} `yaml:"realm"`
 }
 
 // NewConfig takes a .yml filename from the same /config directory, and returns a populated configuration

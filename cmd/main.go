@@ -6,11 +6,15 @@ import (
 	"os"
 
 	"github.com/scorpio-id/kerberos/internal/config"
-	"github.com/scorpio-id/kerberos/internal/transport"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
+	"github.com/scorpio-id/kerberos/internal/transport"
 )
 
 func main() {
+
+	// provide new random seed
+	// rand.Seed(time.Now().UnixNano())
+
 	// parse local config (could be added as cmd line arg)
 	cfg := config.NewConfig("internal/config/local.yml")
  

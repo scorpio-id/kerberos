@@ -3,8 +3,6 @@ package client
 import (
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
 	"time"
 
 	"github.com/scorpio-id/kerberos/internal/credentials"
@@ -237,31 +235,4 @@ func (cl *Client) Destroy() {
 	cl.cache.clear()
 	cl.Credentials = creds
 	cl.Log("client destroyed")
-}
-
-
-
-func (client *Client) Krb5TGTClientHandler(w http.ResponseWriter, r *http.Request) {
-	// return .conf file type
-	w.Header().Set("Content-Type", "application/octet-stream")
-
-	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, "scorpio/admin")
-
-	message, err := messages.NewASReqForTGT("SCORPIO.IO", client.Config, cname)
-	if err != nil{
-		log.Fatalf("%v", err)
-	}
-
-	// TODO: add realm to config.go
-	tgt, err := client.ASExchange("SCORPIO.IO", message, 1)
-	if err != nil{
-		log.Fatalf("%v", err)
-	}
-
-	bytes, err := tgt.Ticket.Marshal()
-	if err != nil{
-		log.Fatalf("%v", err)
-	}
-
-	w.Write(bytes)
 }

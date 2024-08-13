@@ -4,6 +4,11 @@ server:
   port: 8083
 
 oauth:
-  enabled: False
+  enabled: True
   trusted_issuers:
     - "http://localhost:8082/jwks"
+
+realm:
+  name: "SCORPIO.IO"
+  password_rotation: "1h"
+  password_length: 18
