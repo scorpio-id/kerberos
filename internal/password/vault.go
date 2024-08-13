@@ -165,9 +165,10 @@ func generatePassword(n int) string {
 // @Failure 415 {string} string "Unsupported Media Type" 
 // @Failure 500 {string} string "Internal Server Error" 
 //
-// @Router /principal [post, delete]
+// @Router /krb/principal [post]
+// @Router /krb/principal [delete]
 //
-// ClientCredentialsHandler as defined in https://datatracker.ietf.org/doc/html/rfc6749#section-4.4.3
+// PrincipalHandler as described in https://web.mit.edu/kerberos/kfw-4.1/kfw-4.1/kfw-4.1-help/html/principals.htm
 func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -213,7 +214,7 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 415 {string} string "Unsupported Media Type" 
 // @Failure 500 {string} string "Internal Server Error"
 //
-// @Router /tgt [post]
+// @Router /krb/tgt [post]
 //
 // Krb5TGTHandler as described in https://web.mit.edu/kerberos/krb5-1.12/doc/basic/ccache_def.html
 func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {

@@ -771,7 +771,7 @@ func (krb5 *Krb5Config) ToString() string {
 //
 // @Success	200 {string} string "OK" 
 //
-// @Router /krb5conf [get]
+// @Router /krb/conf [get]
 //
 // Krb5ConfHandler as described in https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html
 func (krb5 *Krb5Config) Krb5ConfHandler(w http.ResponseWriter, r *http.Request) {
