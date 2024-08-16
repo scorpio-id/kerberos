@@ -31,9 +31,13 @@ ADD /docs/swagger.yaml /docs/swagger.yaml
 
 COPY --from=builder /workspace/scorpio-kerberos .
 
-# copy the kdc.conf and krb5.conf from the builder to the correct locations on the image filesystem
+# install kerberos KDC, database, and kadmin
 
-# install kerberos KDC, kerberos database, and kadmin
+
+
+# copy the kdc.conf and krb5.conf from the builder to the correct locations on the image filesystem
+# TODO: create & copy kdc.conf
+ADD /internal/config/krb5.conf /etc/krb5.conf
 
 # start KDC and kadmin using service <name> start
 

@@ -9,6 +9,6 @@ oauth:
     - "http://localhost:8082/jwks"
 
 realm:
-  name: "SCORPIO.IO"
+  name: "SCORPIO.ORDINARYCOMPUTING.COM"
   password_rotation: "1h"
   password_length: 18
