@@ -10,9 +10,22 @@ import (
 	"github.com/scorpio-id/kerberos/internal/transport"
 )
 
+// @title Scorpio Kerberos
+// @version 1.0
+// @description a Go Kerberos realm & client implementation
+// @termsOfService http://swagger.io/terms/
+
+// @securityDefinitions.oauth2 OAuth2
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name MIT
+// @license.url https://mit-license.org
 func main() {
 
-	// provide new random seed
+	// FIXME: provide new random seed
 	// rand.Seed(time.Now().UnixNano())
 
 	// parse local config (could be added as cmd line arg)

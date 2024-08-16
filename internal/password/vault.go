@@ -152,7 +152,23 @@ func generatePassword(n int) string {
     return string(b)
 }
 
-// PrincipalHandler
+// Kerberos Principal Swagger Documentation
+//
+// @Summary Manage User & Service Principal KDC identities 
+// @Description Allows an owner or admin to create & delete Kerberos principals. Principals are the primary identifiers for Kerberos entities (users, devices, & applications)
+// @Tags kerberos
+// @Accept application/x-www-form-urlencoded
+// @Param principal    query string true "must be set to a unique principal name when creating or an existing principal name when deleting"
+//
+// @Success	200 {string} string "OK" 
+// @Failure 400 {string} string "Bad Request"
+// @Failure 415 {string} string "Unsupported Media Type" 
+// @Failure 500 {string} string "Internal Server Error" 
+//
+// @Router /krb/principal [post]
+// @Router /krb/principal [delete]
+//
+// PrincipalHandler as described in https://web.mit.edu/kerberos/kfw-4.1/kfw-4.1/kfw-4.1-help/html/principals.htm
 func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
@@ -164,6 +180,8 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 	if principal == "" {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+
+	// TODO: implement a GET to query principals
 
 	if r.Method == "POST" {
 		err := vault.CreatePrincipal(principal)
@@ -182,7 +200,23 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// FIXME - you don't need a client, you just need a krb5config
+// KRB5 Ticket Granting Ticket (TGT) Swagger Documentation
+//
+// @Summary Generates a principal TGT given an OAuth JWT with matching subject claim
+// @Description Ticket Granting Tickets (TGTs) are used by Kerberos clients to obtain Service Tickets (STs) when performing a Ticket Granting Server (TGS) exchange with the KDC.
+// @Tags kerberos
+// @Accept application/x-www-form-urlencoded
+// @Produce application/octet-stream
+// @Param principal    query string true "must be set to existing service principal name"
+//
+// @Success	200 {string} string "OK" 
+// @Failure 400 {string} string "Bad Request"
+// @Failure 415 {string} string "Unsupported Media Type" 
+// @Failure 500 {string} string "Internal Server Error"
+//
+// @Router /krb/tgt [post]
+//
+// Krb5TGTHandler as described in https://web.mit.edu/kerberos/krb5-1.12/doc/basic/ccache_def.html
 func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	// return .conf file type
 	w.Header().Set("Content-Type", "application/octet-stream")

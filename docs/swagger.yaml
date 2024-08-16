@@ -1,0 +1,123 @@
+info:
+  contact: {}
+paths:
+  /krb/conf:
+    get:
+      consumes:
+      - '*/*'
+      description: Generate a krb5.conf file for Kerberos client drivers.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Returns a public krb5.conf file. Kerberos clients require a krb5.conf
+        file to discover the realm.
+      tags:
+      - kerberos
+  /krb/principal:
+    delete:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Allows an owner or admin to create & delete Kerberos principals.
+        Principals are the primary identifiers for Kerberos entities (users, devices,
+        & applications)
+      parameters:
+      - description: must be set to a unique principal name when creating or an existing
+          principal name when deleting
+        in: query
+        name: principal
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "415":
+          description: Unsupported Media Type
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Manage User & Service Principal KDC identities
+      tags:
+      - kerberos
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Allows an owner or admin to create & delete Kerberos principals.
+        Principals are the primary identifiers for Kerberos entities (users, devices,
+        & applications)
+      parameters:
+      - description: must be set to a unique principal name when creating or an existing
+          principal name when deleting
+        in: query
+        name: principal
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "415":
+          description: Unsupported Media Type
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Manage User & Service Principal KDC identities
+      tags:
+      - kerberos
+  /krb/tgt:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Ticket Granting Tickets (TGTs) are used by Kerberos clients to
+        obtain Service Tickets (STs) when performing a Ticket Granting Server (TGS)
+        exchange with the KDC.
+      parameters:
+      - description: must be set to existing service principal name
+        in: query
+        name: principal
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "415":
+          description: Unsupported Media Type
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Generates a principal TGT given an OAuth JWT with matching subject
+        claim
+      tags:
+      - kerberos
+swagger: "2.0"

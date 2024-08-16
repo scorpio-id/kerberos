@@ -761,6 +761,19 @@ func (krb5 *Krb5Config) ToString() string {
 	return builder.String()
 }
 
+// krb5.conf Swagger Documentation
+//
+// @Summary Returns a public krb5.conf file. Kerberos clients require a krb5.conf file to discover the realm. 
+// @Description Generate a krb5.conf file for Kerberos client drivers.
+// @Tags kerberos
+// @Accept */*
+// @Produce application/octet-stream
+//
+// @Success	200 {string} string "OK" 
+//
+// @Router /krb/conf [get]
+//
+// Krb5ConfHandler as described in https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html
 func (krb5 *Krb5Config) Krb5ConfHandler(w http.ResponseWriter, r *http.Request) {
 	// return .conf file type
 	w.Header().Set("Content-Type", "application/octet-stream")
