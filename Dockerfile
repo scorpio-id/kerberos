@@ -32,16 +32,19 @@ ADD /docs/swagger.yaml /docs/swagger.yaml
 COPY --from=builder /workspace/scorpio-kerberos .
 
 # install kerberos KDC, database, and kadmin
-
-
+RUN sudo apt install -y krb5-kdc -y krb5-admin-server
 
 # copy the kdc.conf and krb5.conf from the builder to the correct locations on the image filesystem
-# TODO: create & copy kdc.conf
 ADD /internal/config/krb5.conf /etc/krb5.conf
+ADD /internal/config/kdc.conf /etc/krb5kdc/kdc.conf
 
-# start KDC and kadmin using service <name> start
+# create a new realm -- using default password
+RUN { echo 'resetme\n'; echo 'resetme\n'; } | sudo krb5_newrealm
+
+# ensure KDC and kadmin are started by command above, otherwise use service <name> start
 
 # provision the scorpio/admin@SCORPIO.IO service principal
+RUN kadmin.local add_principal -pw resetme scorpio/admin@SCORPIO.ORDINARYCOMPUTING.COM 
 
 # the command to start the application
 ENTRYPOINT ["/scorpio-kerberos"]
