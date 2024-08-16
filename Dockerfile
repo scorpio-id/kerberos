@@ -39,7 +39,7 @@ ADD /internal/config/krb5.conf /etc/krb5.conf
 ADD /internal/config/kdc.conf /etc/krb5kdc/kdc.conf
 
 # create a new realm -- using default password
-RUN { echo 'resetme\n'; echo 'resetme\n'; } | sudo krb5_newrealm
+RUN { echo 'password\n'; echo 'password\n'; } | sudo krb5_newrealm
 
 # ensure KDC and kadmin are started by command above, otherwise use service <name> start
 
