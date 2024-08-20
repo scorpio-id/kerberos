@@ -1,4 +1,4 @@
-FROM golang:1.19.8 as builder
+FROM golang:latest as builder
 WORKDIR /workspace
 
 # Copy the Go Modules manifests
@@ -29,17 +29,22 @@ ADD /internal/config/local.yml /internal/config/local.yml
 ADD /docs/swagger.json /docs/swagger.json
 ADD /docs/swagger.yaml /docs/swagger.yaml
 
+# Add krb5_newrealm script 
+ADD /scripts/krb5_newrealm.sh /scripts/krb5_newrealm.sh
+
 COPY --from=builder /workspace/scorpio-kerberos .
 
 # install kerberos KDC, database, and kadmin
-RUN sudo apt install -y krb5-kdc -y krb5-admin-server
+RUN apk add krb5-server
 
 # copy the kdc.conf and krb5.conf from the builder to the correct locations on the image filesystem
 ADD /internal/config/krb5.conf /etc/krb5.conf
 ADD /internal/config/kdc.conf /etc/krb5kdc/kdc.conf
 
 # create a new realm -- using default password
-RUN { echo 'password\n'; echo 'password\n'; } | sudo krb5_newrealm
+# permission script
+RUN chmod +x /scripts/krb5_newrealm.sh
+RUN { echo 'password\n'; echo 'password\n'; } | /scripts/krb5_newrealm.sh
 
 # ensure KDC and kadmin are started by command above, otherwise use service <name> start
 
