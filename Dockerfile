@@ -24,6 +24,7 @@ WORKDIR /
 
 # Add configuration files
 ADD /internal/config/local.yml /internal/config/local.yml
+ADD /internal/config/krb5.conf /internal/config/krb5.conf
 
 # Add swagger files
 ADD /docs/swagger.json /docs/swagger.json
