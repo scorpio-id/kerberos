@@ -20,7 +20,7 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 
 	// adding swagger 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-		httpSwagger.URL("http://scorpio.ordinarycomputing.com:" + cfg.Server.Port + "/swagger/doc.json"),
+		httpSwagger.URL("http://krb.scorpio.ordinarycomputing.com:" + cfg.Server.Port + "/swagger/doc.json"),
 		httpSwagger.DeepLinking(true),
 		httpSwagger.DocExpansion("none"),
 		httpSwagger.DomID("swagger-ui"),
