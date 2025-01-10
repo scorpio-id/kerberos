@@ -143,7 +143,7 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	return string(plaintext), nil
 }
 
-func (vault *Vault) GenerateKeytab() {
+func (vault *Vault) GenerateKeytab(volume string) {
 	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
 	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
 }
