@@ -143,6 +143,11 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	return string(plaintext), nil
 }
 
+func (vault *Vault) GenerateKeytab() {
+	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
+	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
+}
+
 // TODO: Add length and runes to config
 func generatePassword(n int) string {
     b := make([]rune, n)
