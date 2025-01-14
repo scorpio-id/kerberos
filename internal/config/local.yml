@@ -13,3 +13,5 @@ realm:
   name: "SCORPIO.ORDINARYCOMPUTING.COM"
   password_rotation: "1h"
   password_length: 18
+
+# TODO - add system service principal names to create and generate keytabs
