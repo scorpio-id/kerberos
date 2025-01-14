@@ -146,6 +146,7 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 func (vault *Vault) GenerateKeytab(volume string) {
 	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
 	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
+	// printf "%b" "addent -password -p scorpio/admin@SCORPIO.IO -k 1 -e aes256-cts-hmac-sha1-96\nresetme\nwkt scorpio-test.keytab" | ktutil
 }
 
 // TODO: Add length and runes to config
