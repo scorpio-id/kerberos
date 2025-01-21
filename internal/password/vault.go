@@ -43,6 +43,34 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 	return vault, nil
 }
 
+func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
+	// create default user principals (such as admin and owner)
+	for _, principal := range cfg.Identities.Principals {
+		err := vault.CreatePrincipal(principal)
+		if err != nil {
+			return err
+		}
+	}
+
+	// create default service principals for oauth, pki, saml, etc ...
+	for _, service := range cfg.Identities.ServicePrincipals {
+		err := vault.CreatePrincipal(service.Name)
+		if err != nil {
+			return err
+		}
+	}
+	
+	// generate keytabs for service principals to enable SPNEGO on startup
+	for _, service := range cfg.Identities.ServicePrincipals {
+		err := vault.GenerateKeytab(service.Name, service.Keytab, cfg.Server.Volume)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 
 func (vault *Vault) CreatePrincipal(principal string) error {
 	// lock & unlock kadmin
@@ -143,10 +171,37 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	return string(plaintext), nil
 }
 
-func (vault *Vault) GenerateKeytab(volume string) {
+func (vault *Vault) GenerateKeytab(service, filename, volume string) error {
 	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
 	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
 	// printf "%b" "addent -password -p scorpio/admin@SCORPIO.IO -k 1 -e aes256-cts-hmac-sha1-96\nresetme\nwkt scorpio-test.keytab" | ktutil
+	
+	// lock & unlock ktutil
+	vault.mu.Lock()
+	defer vault.mu.Unlock()
+
+	password, err := vault.RetrievePassword(service)
+	if err != nil {
+		return err
+	}
+
+	cmd := "addent -password -p " + service + " -k 1 -e aes256-cts-hmac-sha1-96\n" + password + "\nwkt " + volume + filename + " | ktutil"
+
+	vault.cmd = exec.Command(cmd)
+
+	var out bytes.Buffer
+	vault.cmd.Stdout = &out
+
+	// execute command
+	err = vault.cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// reset command buffer
+	vault.cmd = &exec.Cmd{}
+
+	return nil
 }
 
 // TODO: Add length and runes to config

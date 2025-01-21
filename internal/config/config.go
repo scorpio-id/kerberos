@@ -9,8 +9,9 @@ import (
 
 type Config struct {
 	Server struct {
-		Port string `yaml:"port"`
-		Host string `yaml:"host"`
+		Port   string `yaml:"port"`
+		Host   string `yaml:"host"`
+		Volume string `yaml:"volume"`
 	} `yaml:"server"`
 	OAuth struct {
 		Enabled        bool     `yaml:"enabled"`
@@ -21,6 +22,15 @@ type Config struct {
 		PasswordRotation string `yaml:"password_rotation"`
 		PasswordLength   int    `yaml:"password_length"`
 	} `yaml:"realm"`
+	Identities struct {
+		Principals        []string           `yaml:"principals"`
+		ServicePrincipals []ServicePrincipal `yaml:"service_principals"`
+	} `yaml:"identities"`
+}
+
+type ServicePrincipal struct {
+	Name   string `yaml:"name"`
+	Keytab string `yaml:"keytab"`
 }
 
 // NewConfig takes a .yml filename from the same /config directory, and returns a populated configuration

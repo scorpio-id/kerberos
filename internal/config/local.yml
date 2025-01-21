@@ -2,16 +2,26 @@
 server:
   host: "http://127.0.0.1"
   port: 8083
+  volume: "/scorpio/"
 
 oauth:
   enabled: true
   trusted_issuers:
     - "http://localhost:8082/jwks"
-    - "http://scorpio.ordinarycomputing.com:8082/jwks"
+    - "http://scorpio.ordinarycomputing.com/jwks"
 
 realm:
-  name: "SCORPIO.ORDINARYCOMPUTING.COM"
+  name: "KRB.SCORPIO.ORDINARYCOMPUTING.COM"
   password_rotation: "1h"
   password_length: 18
 
-# TODO - add system service principal names to create and generate keytabs
+identities:
+  principals:
+    - scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+  service_principals:
+    - name: scorpio/oauth.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      keytab: scorpio-oauth.keytab
+    - name: scorpio/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      keytab: scorpio-pki.keytab
+    - name: scorpio/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      keytab: scorpio-saml.keytab

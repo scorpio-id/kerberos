@@ -2,6 +2,7 @@
 server:
   host: "http://127.0.0.1"
   port: 8083
+  volume: "/scorpio/"
 
 oauth:
   enabled: True
@@ -9,6 +10,17 @@ oauth:
     - "http://localhost:8082/jwks"
 
 realm:
-  name: "SCORPIO.ORDINARYCOMPUTING.COM"
+  name: "KRB.SCORPIO.ORDINARYCOMPUTING.COM"
   password_rotation: "1h"
   password_length: 18
+
+identities:
+  principals:
+    - scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+  service_principals:
+    - name: scorpio/oauth.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      keytab: scorpio-oauth.keytab
+    - name: scorpio/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      keytab: scorpio-pki.keytab
+    - name: scorpio/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      keytab: scorpio-saml.keytab
