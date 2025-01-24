@@ -185,7 +185,7 @@ func (vault *Vault) GenerateKeytab(service, filename, volume string) error {
 		return err
 	}
 
-	cmd := "addent -password -p " + service + " -k 1 -e aes256-cts-hmac-sha1-96\n" + password + "\nwkt " + volume + filename + " | ktutil"
+	cmd := "addent -password -p " + service + " -k 1 -e aes256-cts-hmac-sha1-96\n" + password + "\nwkt " + volume + "/" + filename + " | ktutil"
 
 	vault.cmd = exec.Command(cmd)
 

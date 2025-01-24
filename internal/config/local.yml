@@ -2,7 +2,7 @@
 server:
   host: "http://127.0.0.1"
   port: 8083
-  volume: "/scorpio/"
+  volume: "/scorpio"
 
 oauth:
   enabled: true
