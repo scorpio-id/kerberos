@@ -10,17 +10,17 @@ oauth:
     - "http://localhost:8082/jwks"
 
 realm:
-  name: "KRB.SCORPIO.ORDINARYCOMPUTING.COM"
+  name: "SCORPIO.IO"
   password_rotation: "1h"
   password_length: 18
 
 identities:
   principals:
-    - scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - scorpio-test/admin@SCORPIO.IO
   service_principals:
-    - name: scorpio/oauth.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: scorpio/oauth.scorpio.ordinarycomputing.com@SCORPIO.IO
       keytab: scorpio-oauth.keytab
-    - name: scorpio/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: scorpio/ca.scorpio.ordinarycomputing.com@SCORPIO.IO
       keytab: scorpio-pki.keytab
-    - name: scorpio/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: scorpio/idp.scorpio.ordinarycomputing.com@SCORPIO.IO
       keytab: scorpio-saml.keytab

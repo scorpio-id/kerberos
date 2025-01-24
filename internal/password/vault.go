@@ -44,6 +44,8 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 }
 
 func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
+
+	fmt.Println("provisioning default principals!")
 	// create default user principals (such as admin and owner)
 	for _, principal := range cfg.Identities.Principals {
 		err := vault.CreatePrincipal(principal)
@@ -52,6 +54,7 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 		}
 	}
 
+	fmt.Println("provisioning default service principals!")
 	// create default service principals for oauth, pki, saml, etc ...
 	for _, service := range cfg.Identities.ServicePrincipals {
 		err := vault.CreatePrincipal(service.Name)
@@ -60,6 +63,7 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 		}
 	}
 	
+	fmt.Println("provisioning keytabs!")
 	// generate keytabs for service principals to enable SPNEGO on startup
 	for _, service := range cfg.Identities.ServicePrincipals {
 		err := vault.GenerateKeytab(service.Name, service.Keytab, cfg.Server.Volume)
@@ -152,8 +156,8 @@ func (vault *Vault) ChangePrincipalPassword(principal string, newpass string) er
 }
 
 func (vault *Vault) RetrievePassword(principal string) (string, error) {
-	vault.mu.RLock()
-	defer vault.mu.RUnlock()
+	// vault.mu.RLock()
+	// defer vault.mu.RUnlock()
 
 	// TODO: check if principal exists first
 	decoded, err := hex.DecodeString(vault.store.data[principal].encpass)
@@ -185,9 +189,13 @@ func (vault *Vault) GenerateKeytab(service, filename, volume string) error {
 		return err
 	}
 
-	cmd := "addent -password -p " + service + " -k 1 -e aes256-cts-hmac-sha1-96\n" + password + "\nwkt " + volume + "/" + filename + " | ktutil"
+	// cmd := `addent -password -p ` + service + ` -k 1 -e aes256-cts-hmac-sha1-96\n` + password + `\nwkt ` + volume + `/` + filename + ` | ktutil`
+	// fmt.Println(cmd)
 
-	vault.cmd = exec.Command(cmd)
+	cmd := "ktutil; addent -password -p " + service + " -k 1 -e aes256-cts-hmac-sha1-96; " + password + "; wkt " + volume + "/" + filename
+	fmt.Println(cmd)
+
+	vault.cmd = exec.Command("/bin/sh", "-c", cmd)
 
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
