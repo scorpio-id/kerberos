@@ -34,6 +34,12 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 		log.Fatal(err)
 	}
 
+	// generate keytabs on mounted volumes
+	err = vault.ProvisionDefaultPrincipals(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	subr := router.PathPrefix("/krb").Subrouter()
 
 	subr.HandleFunc("/conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
