@@ -7,9 +7,13 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"os/exec"
 	"sync"
+	"time"
 
+	"github.com/jcmturner/gokrb5/v8/iana/etypeID"
+	"github.com/jcmturner/gokrb5/v8/keytab"
 	"github.com/scorpio-id/kerberos/internal/client"
 	"github.com/scorpio-id/kerberos/internal/config"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
@@ -66,7 +70,7 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 	fmt.Println("provisioning keytabs!")
 	// generate keytabs for service principals to enable SPNEGO on startup
 	for _, service := range cfg.Identities.ServicePrincipals {
-		err := vault.GenerateKeytab(service.Name, service.Keytab, cfg.Server.Volume)
+		err := vault.GenerateKeytab(service.Name, cfg.Realm.Name, service.Keytab, cfg.Server.Volume)
 		if err != nil {
 			return err
 		}
@@ -175,7 +179,7 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	return string(plaintext), nil
 }
 
-func (vault *Vault) GenerateKeytab(service, filename, volume string) error {
+func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) error {
 	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
 	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
 	// printf "%b" "addent -password -p scorpio/admin@SCORPIO.IO -k 1 -e aes256-cts-hmac-sha1-96\nresetme\nwkt scorpio-test.keytab" | ktutil
@@ -192,22 +196,25 @@ func (vault *Vault) GenerateKeytab(service, filename, volume string) error {
 	// cmd := `addent -password -p ` + service + ` -k 1 -e aes256-cts-hmac-sha1-96\n` + password + `\nwkt ` + volume + `/` + filename + ` | ktutil`
 	// fmt.Println(cmd)
 
-	cmd := "ktutil; addent -password -p " + service + " -k 1 -e aes256-cts-hmac-sha1-96; " + password + "; wkt " + volume + "/" + filename
-	fmt.Println(cmd)
+	// TODO: assess JCMTURNER v8 Dependency - https://github.com/jcmturner/gokrb5/tree/master/v8
+	kt := keytab.New()
+	ts := time.Now()
 
-	vault.cmd = exec.Command("/bin/sh", "-c", cmd)
-
-	var out bytes.Buffer
-	vault.cmd.Stdout = &out
-
-	// execute command
-	err = vault.cmd.Run()
+	err = kt.AddEntry(service, realm, password, ts, uint8(1), etypeID.AES256_CTS_HMAC_SHA1_96)
 	if err != nil {
 		return err
 	}
 
-	// reset command buffer
-	vault.cmd = &exec.Cmd{}
+	generated, err := kt.Marshal()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Permission keytab file correctly 
+	os.WriteFile(volume+"/"+filename, generated, 0777)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
