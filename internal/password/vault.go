@@ -89,7 +89,7 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	password := generatePassword(vault.plength)
 
 	// set up command
-	vault.cmd = exec.Command("kadmin", "-w", vault.password, "add_principal", "-pw", password, principal)
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "add_principal", "-pw", password, principal)
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
 
@@ -116,7 +116,7 @@ func (vault *Vault) DeletePrincipal(principal string) error {
 	defer vault.mu.Unlock()
 
 	// set up command
-	vault.cmd = exec.Command("kadmin", "-w", vault.password, "delete_principal", "-force", principal)
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "delete_principal", "-force", principal)
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
 
@@ -141,7 +141,7 @@ func (vault *Vault) ChangePrincipalPassword(principal string, newpass string) er
 	defer vault.mu.Unlock()
 
 	// set up command
-	vault.cmd = exec.Command("kadmin", "-w", vault.password, "change_password", "-pw", newpass, principal)
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "change_password", "-pw", newpass, principal)
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
 
