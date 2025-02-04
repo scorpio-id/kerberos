@@ -29,7 +29,7 @@ func main() {
 	// rand.Seed(time.Now().UnixNano())
 
 	// parse local config (could be added as cmd line arg)
-	cfg := config.NewConfig("internal/config/test.yml")
+	cfg := config.NewConfig("internal/config/local.yml")
  
 	// load default kr5b.conf
 	conf, err := os.ReadFile("internal/config/krb5.conf")
