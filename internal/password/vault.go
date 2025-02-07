@@ -61,7 +61,7 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 	fmt.Println("provisioning default service principals!")
 	// create default service principals for oauth, pki, saml, etc ...
 	for _, service := range cfg.Identities.ServicePrincipals {
-		err := vault.CreatePrincipal(service.Name)
+		err := vault.CreatePrincipalWithSerializedPassword(service.Name, service.Passfile, cfg.Server.Volume)
 		if err != nil {
 			return err
 		}
@@ -102,6 +102,41 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	// stores the principal with metadata
 	// FIXME: accept clientID
 	vault.store.Add("scorpio", principal, password)
+
+	// reset command buffer
+	vault.cmd = &exec.Cmd{}
+
+	return nil
+}
+
+func (vault *Vault) CreatePrincipalWithSerializedPassword(principal, filename, path string) error {
+	// lock & unlock kadmin
+	vault.mu.Lock()
+	defer vault.mu.Unlock()
+
+	// TODO check to ensure the principal name is unique and conforms to MIT standards
+	password := generatePassword(vault.plength)
+
+	// set up command
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "add_principal", "-pw", password, principal)
+	var out bytes.Buffer
+	vault.cmd.Stdout = &out
+
+	// execute command
+	err := vault.cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// stores the principal with metadata
+	// FIXME: accept clientID
+	vault.store.Add("scorpio", principal, password)
+
+	// Needs to 0777 so that it can be deleted
+	err = os.WriteFile(path + "/" + filename, []byte(password), 0777)
+    if err != nil {
+		return err
+    }
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}

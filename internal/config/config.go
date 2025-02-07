@@ -29,8 +29,9 @@ type Config struct {
 }
 
 type ServicePrincipal struct {
-	Name   string `yaml:"name"`
-	Keytab string `yaml:"keytab"`
+	Name   		string `yaml:"name"`
+	Keytab 		string `yaml:"keytab"`
+	Passfile	string `yaml:"passfile"`
 }
 
 // NewConfig takes a .yml filename from the same /config directory, and returns a populated configuration
