@@ -8,7 +8,7 @@ oauth:
   enabled: true
   trusted_issuers:
     - "http://localhost:8082/jwks"
-    - "http://scorpio.ordinarycomputing.com/jwks"
+    - "http://oauth.scorpio.ordinarycomputing.com/jwks"
 
 realm:
   name: "KRB.SCORPIO.ORDINARYCOMPUTING.COM"
