@@ -61,20 +61,19 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 	fmt.Println("provisioning default service principals!")
 	// create default service principals for oauth, pki, saml, etc ...
 	for _, service := range cfg.Identities.ServicePrincipals {
-		err := vault.CreatePrincipalWithSerializedPassword(service.Name, service.Passfile, cfg.Server.Volume)
+		err := vault.CreatePrincipalWithPassword(service.Name, service.Password)
 		if err != nil {
 			return err
 		}
 	}
 	
-	fmt.Println("provisioning keytabs!")
 	// generate keytabs for service principals to enable SPNEGO on startup
-	for _, service := range cfg.Identities.ServicePrincipals {
-		err := vault.GenerateKeytab(service.Name, cfg.Realm.Name, service.Keytab, cfg.Server.Volume)
-		if err != nil {
-			return err
-		}
-	}
+	// for _, service := range cfg.Identities.ServicePrincipals {
+	// 	err := vault.GenerateKeytab(service.Name, cfg.Realm.Name, service.Keytab, cfg.Server.Volume)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -109,13 +108,10 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	return nil
 }
 
-func (vault *Vault) CreatePrincipalWithSerializedPassword(principal, filename, path string) error {
+func (vault *Vault) CreatePrincipalWithPassword(principal, password string) error {
 	// lock & unlock kadmin
 	vault.mu.Lock()
 	defer vault.mu.Unlock()
-
-	// TODO check to ensure the principal name is unique and conforms to MIT standards
-	password := generatePassword(vault.plength)
 
 	// set up command
 	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "add_principal", "-pw", password, principal)
@@ -131,12 +127,6 @@ func (vault *Vault) CreatePrincipalWithSerializedPassword(principal, filename, p
 	// stores the principal with metadata
 	// FIXME: accept clientID
 	vault.store.Add("scorpio", principal, password)
-
-	// Needs to 0777 so that it can be deleted
-	err = os.WriteFile(path + "/" + filename, []byte(password), 0777)
-    if err != nil {
-		return err
-    }
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}

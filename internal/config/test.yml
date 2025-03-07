@@ -2,7 +2,6 @@
 server:
   host: "http://127.0.0.1"
   port: 8083
-  volume: "/scorpio"
 
 oauth:
   enabled: True
@@ -16,11 +15,11 @@ realm:
 
 identities:
   principals:
-    - scorpio-test/admin@SCORPIO.IO
+    - scorpio-test/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
   service_principals:
-    - name: scorpio/oauth.scorpio.ordinarycomputing.com@SCORPIO.IO
-      keytab: scorpio-oauth.keytab
-    - name: scorpio/ca.scorpio.ordinarycomputing.com@SCORPIO.IO
-      keytab: scorpio-pki.keytab
-    - name: scorpio/idp.scorpio.ordinarycomputing.com@SCORPIO.IO
-      keytab: scorpio-saml.keytab
+    - name: scorpio/oauth.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-1111
+    - name: scorpio/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-2222
+    - name: scorpio/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-3333

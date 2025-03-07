@@ -11,7 +11,6 @@ type Config struct {
 	Server struct {
 		Port   string `yaml:"port"`
 		Host   string `yaml:"host"`
-		Volume string `yaml:"volume"`
 	} `yaml:"server"`
 	OAuth struct {
 		Enabled        bool     `yaml:"enabled"`
@@ -30,8 +29,7 @@ type Config struct {
 
 type ServicePrincipal struct {
 	Name   		string `yaml:"name"`
-	Keytab 		string `yaml:"keytab"`
-	Passfile	string `yaml:"passfile"`
+	Password	string `yaml:"password"`
 }
 
 // NewConfig takes a .yml filename from the same /config directory, and returns a populated configuration
