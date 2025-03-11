@@ -236,7 +236,7 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 	}
 
 	// TODO: Permission keytab file correctly 
-	os.WriteFile(volume+"/"+filename, generated, 0777)
+	err = os.WriteFile(volume+"/"+filename, generated, 0777)
 	if err != nil {
 		return err
 	}
