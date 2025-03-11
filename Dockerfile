@@ -50,7 +50,8 @@ RUN { echo 'password\n'; echo 'password\n'; } | /scripts/krb5_newrealm.sh
 # ensure KDC and kadmin are started by command above, otherwise use service <name> start
 
 # provision the scorpio/admin@SCORPIO.IO service principal
-RUN kadmin.local add_principal -pw resetme scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM 
+# this is currently done by the application itself
+# RUN kadmin.local add_principal -pw resetme scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM 
 
 # the command to start the application
 ENTRYPOINT ["/scorpio-kerberos"]
