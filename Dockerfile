@@ -38,6 +38,8 @@ COPY --from=builder /workspace/scorpio-kerberos .
 
 # install kerberos KDC, database, and kadmin
 RUN apk add krb5-server
+RUN apk add krb5-admin-server
+RUN apk add krb5-kdc
 
 # copy the kdc.conf and krb5.conf from the builder to the correct locations on the image filesystem
 ADD /internal/config/krb5.conf /etc/krb5.conf
