@@ -20,6 +20,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o scorpio-
 FROM alpine:latest
 
 RUN apk update
+RUN apk add --no-cache bash
 WORKDIR /
 
 # Add configuration files
