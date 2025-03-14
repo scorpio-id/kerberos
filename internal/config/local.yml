@@ -4,7 +4,7 @@ server:
   port: 8083
 
 oauth:
-  enabled: true
+  enabled: false
   trusted_issuers:
     - "http://localhost:8082/jwks"
     - "http://oauth.scorpio.ordinarycomputing.com:8082/jwks"
