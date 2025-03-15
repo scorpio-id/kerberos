@@ -24,14 +24,14 @@ RUN apk update
 # install bash
 RUN apk add --no-cache bash
 
-# install kerberos KDC, database, and kadmin
-RUN apk add krb5
-
 # install openrc 
 RUN apk add openrc
 
 # add init.d
 RUN apk add util-linux
+
+# install kerberos KDC, database, and kadmin
+RUN apk add krb5
 
 WORKDIR /
 
