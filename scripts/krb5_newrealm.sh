@@ -12,7 +12,7 @@ eof
 
 kdb5_util create -s
 /etc/init.d/krb5-kdc start || true
-/etc/init.d/krb5-admin-server start ||true 
+/etc/init.d/krb5-admin-server start || true 
 if [ ! -r /etc/krb5kdc/kadm5.acl ] ; then
     cat <<EOF >/etc/krb5kdc/kadm5.acl
 # This file Is the access control list for krb5 administration.
