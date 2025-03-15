@@ -18,7 +18,7 @@ identities:
   principals:
     - scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
   service_principals:
-    - name: scorpio/oauth.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: scorpio-oauth@KRB.SCORPIO.ORDINARYCOMPUTING.COM
       password: move-to-kube-secrets-1111
     - name: scorpio/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
       password: move-to-kube-secrets-2222
