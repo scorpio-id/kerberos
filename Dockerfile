@@ -32,6 +32,7 @@ RUN apk add util-linux
 
 # install kerberos KDC, database, and kadmin
 RUN apk add krb5
+RUN apk add krb5-server
 
 WORKDIR /
 
