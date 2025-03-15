@@ -24,6 +24,9 @@ RUN apk update
 # install bash
 RUN apk add --no-cache bash
 
+# add volume for openrc
+VOLUME ["/sys/fs/cgroup"]
+
 # install openrc 
 RUN apk add openrc
 
@@ -44,8 +47,9 @@ ADD /internal/config/krb5.conf /internal/config/krb5.conf
 ADD /docs/swagger.json /docs/swagger.json
 ADD /docs/swagger.yaml /docs/swagger.yaml
 
-# Add krb5_newrealm script 
+# Add krb5_newrealm script and entrypoint command script
 ADD /scripts/krb5_newrealm.sh /scripts/krb5_newrealm.sh
+ADD /scripts/commands.sh /scripts/commands.sh
 
 COPY --from=builder /workspace/scorpio-kerberos .
 
@@ -65,4 +69,6 @@ RUN { echo 'password\n'; echo 'password\n'; } | /scripts/krb5_newrealm.sh
 # RUN kadmin.local add_principal -pw resetme scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM 
 
 # the command to start the application
-ENTRYPOINT ["/scorpio-kerberos"]
+RUN chmod +x /scripts/commands.sh
+
+ENTRYPOINT ["/scripts/commands.sh"]
