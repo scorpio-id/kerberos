@@ -20,7 +20,19 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o scorpio-
 FROM alpine:latest
 
 RUN apk update
+
+# install bash
 RUN apk add --no-cache bash
+
+# install kerberos KDC, database, and kadmin
+RUN apk add krb5
+
+# install openrc 
+RUN apk add openrc
+
+# add init.d
+RUN apk add util-linux
+
 WORKDIR /
 
 # Add configuration files
@@ -35,10 +47,6 @@ ADD /docs/swagger.yaml /docs/swagger.yaml
 ADD /scripts/krb5_newrealm.sh /scripts/krb5_newrealm.sh
 
 COPY --from=builder /workspace/scorpio-kerberos .
-
-# install kerberos KDC, database, and kadmin
-RUN apk add krb5
-RUN apk add krb5-server
 
 # copy the kdc.conf and krb5.conf from the builder to the correct locations on the image filesystem
 ADD /internal/config/krb5.conf /etc/krb5.conf
