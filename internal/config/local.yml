@@ -20,7 +20,7 @@ identities:
   service_principals:
     - name: scorpio-oauth@KRB.SCORPIO.ORDINARYCOMPUTING.COM
       password: move-to-kube-secrets-1111
-    - name: HTTPS/ca.scorpio.ordinarycomputing.com:8083@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: HTTPS/ca.scorpio.ordinarycomputing.com:8081@KRB.SCORPIO.ORDINARYCOMPUTING.COM
       password: move-to-kube-secrets-2222
     - name: HTTPS/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
       password: move-to-kube-secrets-3333
