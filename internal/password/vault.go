@@ -7,9 +7,13 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"os/exec"
 	"sync"
+	"time"
 
+	"github.com/jcmturner/gokrb5/v8/iana/etypeID"
+	"github.com/jcmturner/gokrb5/v8/keytab"
 	"github.com/scorpio-id/kerberos/internal/client"
 	"github.com/scorpio-id/kerberos/internal/config"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
@@ -43,6 +47,37 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 	return vault, nil
 }
 
+func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
+
+	fmt.Println("provisioning default principals!")
+	// create default user principals (such as admin and owner)
+	for _, principal := range cfg.Identities.Principals {
+		err := vault.CreatePrincipal(principal)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Println("provisioning default service principals!")
+	// create default service principals for oauth, pki, saml, etc ...
+	for _, service := range cfg.Identities.ServicePrincipals {
+		err := vault.CreatePrincipalWithPassword(service.Name, service.Password)
+		if err != nil {
+			return err
+		}
+	}
+	
+	// generate keytabs for service principals to enable SPNEGO on startup
+	// for _, service := range cfg.Identities.ServicePrincipals {
+	// 	err := vault.GenerateKeytab(service.Name, cfg.Realm.Name, service.Keytab, cfg.Server.Volume)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
+	return nil
+}
+
 
 func (vault *Vault) CreatePrincipal(principal string) error {
 	// lock & unlock kadmin
@@ -53,7 +88,33 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	password := generatePassword(vault.plength)
 
 	// set up command
-	vault.cmd = exec.Command("kadmin", "-w", vault.password, "add_principal", "-pw", password, principal)
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "add_principal", "-pw", password, principal)
+	var out bytes.Buffer
+	vault.cmd.Stdout = &out
+
+	// execute command
+	err := vault.cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	// stores the principal with metadata
+	// FIXME: accept clientID
+	vault.store.Add("scorpio", principal, password)
+
+	// reset command buffer
+	vault.cmd = &exec.Cmd{}
+
+	return nil
+}
+
+func (vault *Vault) CreatePrincipalWithPassword(principal, password string) error {
+	// lock & unlock kadmin
+	vault.mu.Lock()
+	defer vault.mu.Unlock()
+
+	// set up command
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "add_principal", "-pw", password, principal)
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
 
@@ -80,7 +141,7 @@ func (vault *Vault) DeletePrincipal(principal string) error {
 	defer vault.mu.Unlock()
 
 	// set up command
-	vault.cmd = exec.Command("kadmin", "-w", vault.password, "delete_principal", "-force", principal)
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "delete_principal", "-force", principal)
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
 
@@ -105,7 +166,7 @@ func (vault *Vault) ChangePrincipalPassword(principal string, newpass string) er
 	defer vault.mu.Unlock()
 
 	// set up command
-	vault.cmd = exec.Command("kadmin", "-w", vault.password, "change_password", "-pw", newpass, principal)
+	vault.cmd = exec.Command("kadmin.local", "-w", vault.password, "change_password", "-pw", newpass, principal)
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
 
@@ -124,8 +185,8 @@ func (vault *Vault) ChangePrincipalPassword(principal string, newpass string) er
 }
 
 func (vault *Vault) RetrievePassword(principal string) (string, error) {
-	vault.mu.RLock()
-	defer vault.mu.RUnlock()
+	// vault.mu.RLock()
+	// defer vault.mu.RUnlock()
 
 	// TODO: check if principal exists first
 	decoded, err := hex.DecodeString(vault.store.data[principal].encpass)
@@ -141,6 +202,46 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	}
 
 	return string(plaintext), nil
+}
+
+func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) error {
+	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
+	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
+	// printf "%b" "addent -password -p scorpio/admin@SCORPIO.IO -k 1 -e aes256-cts-hmac-sha1-96\nresetme\nwkt scorpio-test.keytab" | ktutil
+	
+	// lock & unlock ktutil
+	vault.mu.Lock()
+	defer vault.mu.Unlock()
+
+	password, err := vault.RetrievePassword(service)
+	if err != nil {
+		return err
+	}
+
+	// cmd := `addent -password -p ` + service + ` -k 1 -e aes256-cts-hmac-sha1-96\n` + password + `\nwkt ` + volume + `/` + filename + ` | ktutil`
+	// fmt.Println(cmd)
+
+	// TODO: assess JCMTURNER v8 Dependency - https://github.com/jcmturner/gokrb5/tree/master/v8
+	kt := keytab.New()
+	ts := time.Now()
+
+	err = kt.AddEntry(service, realm, password, ts, uint8(1), etypeID.AES256_CTS_HMAC_SHA1_96)
+	if err != nil {
+		return err
+	}
+
+	generated, err := kt.Marshal()
+	if err != nil {
+		return err
+	}
+
+	// TODO: Permission keytab file correctly 
+	err = os.WriteFile(volume+"/"+filename, generated, 0777)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // TODO: Add length and runes to config

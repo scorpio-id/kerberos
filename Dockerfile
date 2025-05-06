@@ -20,6 +20,23 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o scorpio-
 FROM alpine:latest
 
 RUN apk update
+
+# install bash
+RUN apk add --no-cache bash
+
+# add volume for openrc
+VOLUME ["/sys/fs/cgroup"]
+
+# install openrc 
+RUN apk add openrc
+
+# add init.d
+RUN apk add util-linux
+
+# install kerberos KDC, database, and kadmin
+RUN apk add krb5
+RUN apk add krb5-server
+
 WORKDIR /
 
 # Add configuration files
@@ -30,13 +47,11 @@ ADD /internal/config/krb5.conf /internal/config/krb5.conf
 ADD /docs/swagger.json /docs/swagger.json
 ADD /docs/swagger.yaml /docs/swagger.yaml
 
-# Add krb5_newrealm script 
+# Add krb5_newrealm script and entrypoint command script
 ADD /scripts/krb5_newrealm.sh /scripts/krb5_newrealm.sh
+ADD /scripts/commands.sh /scripts/commands.sh
 
 COPY --from=builder /workspace/scorpio-kerberos .
-
-# install kerberos KDC, database, and kadmin
-RUN apk add krb5-server
 
 # copy the kdc.conf and krb5.conf from the builder to the correct locations on the image filesystem
 ADD /internal/config/krb5.conf /etc/krb5.conf
@@ -50,7 +65,10 @@ RUN { echo 'password\n'; echo 'password\n'; } | /scripts/krb5_newrealm.sh
 # ensure KDC and kadmin are started by command above, otherwise use service <name> start
 
 # provision the scorpio/admin@SCORPIO.IO service principal
-RUN kadmin.local add_principal -pw resetme scorpio/admin@SCORPIO.ORDINARYCOMPUTING.COM 
+# this is currently done by the application itself
+# RUN kadmin.local add_principal -pw resetme scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM 
 
 # the command to start the application
-ENTRYPOINT ["/scorpio-kerberos"]
+RUN chmod +x /scripts/commands.sh
+
+ENTRYPOINT ["/scripts/commands.sh"]

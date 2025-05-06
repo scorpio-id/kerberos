@@ -34,13 +34,13 @@ func main() {
 	// load default kr5b.conf
 	conf, err := os.ReadFile("internal/config/krb5.conf")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 
 	// parse default krb5.conf
 	krb5, err := krb5conf.NewConfigFromString(string(conf))
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 
 	// create a new mux router using config and krb5.conf

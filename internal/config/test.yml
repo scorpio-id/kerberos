@@ -9,6 +9,17 @@ oauth:
     - "http://localhost:8082/jwks"
 
 realm:
-  name: "SCORPIO.ORDINARYCOMPUTING.COM"
+  name: "SCORPIO.IO"
   password_rotation: "1h"
   password_length: 18
+
+identities:
+  principals:
+    - scorpio-test/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+  service_principals:
+    - name: scorpio/oauth.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-1111
+    - name: scorpio/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-2222
+    - name: scorpio/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-3333

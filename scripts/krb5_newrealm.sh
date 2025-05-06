@@ -12,9 +12,9 @@ eof
 
 kdb5_util create -s
 /etc/init.d/krb5-kdc start || true
-/etc/init.d/krb5-admin-server start ||true 
-if [ ! -r /etc/krb5kdc/kadm5.acl ] ; then
-    cat <<EOF >/etc/krb5kdc/kadm5.acl
+/etc/init.d/krb5-admin-server start || true 
+if [ ! -r /var/lib/krb5kdc/kadm5.acl ] ; then
+    cat <<EOF >/var/lib/krb5kdc/kadm5.acl
 # This file Is the access control list for krb5 administration.
 # When this file is edited run /etc/init.d/krb5-admin-server restart to activate
 # One common way to set up Kerberos administration is to allow any principal 
