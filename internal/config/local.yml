@@ -1,0 +1,26 @@
+# server configuration
+server:
+  host: "http://127.0.0.1"
+  port: 8083
+
+oauth:
+  enabled: false
+  trusted_issuers:
+    - "http://localhost:8082/jwks"
+    - "http://oauth.scorpio.ordinarycomputing.com:8082/jwks"
+
+realm:
+  name: "KRB.SCORPIO.ORDINARYCOMPUTING.COM"
+  password_rotation: "1h"
+  password_length: 18
+
+identities:
+  principals:
+    - scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+  service_principals:
+    - name: scorpio-oauth@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-1111
+    - name: HTTP/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-2222
+    - name: HTTPS/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+      password: move-to-kube-secrets-3333
