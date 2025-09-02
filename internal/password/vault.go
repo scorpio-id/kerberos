@@ -18,11 +18,13 @@ import (
 	"github.com/scorpio-id/kerberos/internal/config"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
 	"github.com/scorpio-id/kerberos/internal/messages"
+	"github.com/scorpio-id/kerberos/internal/metadata"
 	"github.com/scorpio-id/kerberos/internal/types"
 )
 
 type Vault struct {
 	store    *Store
+	metadata *metadata.Store
 	password string
 	plength  int
 	krb5     *krb5conf.Krb5Config
@@ -35,6 +37,8 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO create metadata store
 
 	vault := &Vault{
 		store:    store,
@@ -242,6 +246,10 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 	}
 
 	return nil
+}
+
+func (vault *Vault) AuditPrincipals() {
+	// TODO implement, use kadmin to list princs and reconcile with store
 }
 
 // TODO: Add length and runes to config
