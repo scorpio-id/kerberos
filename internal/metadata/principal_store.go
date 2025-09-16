@@ -1,6 +1,9 @@
 package metadata
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Store struct {
 	AccessControlList map[string]string `json:"access_control_list"`
@@ -16,10 +19,20 @@ type Account struct {
 }
 
 // TODO document
-func NewStore() Store {
-	return Store {
+func NewStore() *Store {
+	return &Store {
 		AccessControlList: make(map[string]string),
 		Accounts: make([]Account, 0),
+	}
+}
+
+func NewAccount(principal, enctype string, isService bool) Account {
+	now := time.Now().UTC().Format(time.RFC1123)
+	return Account {
+		PrincipalName: principal,
+		EncryptionType: enctype,
+		DateCreated: now,
+		IsServicePrincipal: isService,
 	}
 }
 

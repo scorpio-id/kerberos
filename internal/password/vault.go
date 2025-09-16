@@ -38,10 +38,12 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 		return nil, err
 	}
 
-	// TODO create metadata store
+	// create metadata store
+	principals := metadata.NewStore()
 
 	vault := &Vault{
 		store:    store,
+		metadata: principals,
 		password: password,
 		plength:  cfg.Realm.PasswordLength,
 		krb5:     krb5,
@@ -70,14 +72,6 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 			return err
 		}
 	}
-	
-	// generate keytabs for service principals to enable SPNEGO on startup
-	// for _, service := range cfg.Identities.ServicePrincipals {
-	// 	err := vault.GenerateKeytab(service.Name, cfg.Realm.Name, service.Keytab, cfg.Server.Volume)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	return nil
 }
@@ -132,6 +126,11 @@ func (vault *Vault) CreatePrincipalWithPassword(principal, password string) erro
 	// FIXME: accept clientID
 	vault.store.Add("scorpio", principal, password)
 
+	// add account to metadata principal store for admin API
+	// FIXME determine if principal is service or user principal
+	a := metadata.NewAccount(principal, vault.krb5.LibDefaults.DefaultTGSEnctypes[0], true)
+	vault.metadata.Add(a)
+
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
 
@@ -157,6 +156,9 @@ func (vault *Vault) DeletePrincipal(principal string) error {
 	
 	// remove principal from store
 	vault.store.Delete(principal)
+
+	// remove principal from metadata
+	vault.metadata.Delete(principal)
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
