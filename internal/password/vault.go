@@ -100,6 +100,10 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	// FIXME: accept clientID
 	vault.store.Add("scorpio", principal, password)
 
+	// FIXME determine if principal is service or user principal
+	a := metadata.NewAccount(principal, vault.krb5.LibDefaults.DefaultTGSEnctypes[0], true)
+	vault.metadata.Add(a)
+
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
 

@@ -67,3 +67,6 @@ func(s *Store) Contains(principal string) bool {
 
 	return false
 }
+
+// TODO implement metadata API handler
+// TODO marshal ACL in Store struct

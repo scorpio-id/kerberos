@@ -22,5 +22,3 @@ identities:
       password: move-to-kube-secrets-1111
     - name: HTTP/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
       password: move-to-kube-secrets-2222
-    - name: HTTPS/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
-      password: move-to-kube-secrets-3333
