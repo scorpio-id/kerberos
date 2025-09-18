@@ -45,6 +45,7 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 	subr.HandleFunc("/conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
 	subr.HandleFunc("/tgt", vault.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
 	subr.HandleFunc("/principal", vault.PrincipalHandler).Methods(http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodOptions)
+	subr.HandleFunc("/metadata", vault.MetadataHandler).Methods(http.MethodGet, http.MethodOptions)
 
 	// apply OAuth middleware if enabled
 	if cfg.OAuth.Enabled {
