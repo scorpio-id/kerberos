@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -9,27 +11,27 @@ import (
 
 type Config struct {
 	Server struct {
-		Port   string `yaml:"port"`
-		Host   string `yaml:"host"`
-	} `yaml:"server"`
+		Port   string `yaml:"port" json:"port"`
+		Host   string `yaml:"host" json:"host"`
+	} `yaml:"server" json:"server"`
 	OAuth struct {
-		Enabled        bool     `yaml:"enabled"`
-		TrustedIssuers []string `yaml:"trusted_issuers"`
-	} `yaml:"oauth"`
+		Enabled        bool     `yaml:"enabled" json:"enabled"`
+		TrustedIssuers []string `yaml:"trusted_issuers" json:"trusted_issuers"`
+	} `yaml:"oauth" json:"oauth"`
 	Realm struct {
-		Name             string `yaml:"name"`
-		PasswordRotation string `yaml:"password_rotation"`
-		PasswordLength   int    `yaml:"password_length"`
-	} `yaml:"realm"`
+		Name             string `yaml:"name" json:"name"`
+		PasswordRotation string `yaml:"password_rotation" json:"password_rotation"`
+		PasswordLength   int    `yaml:"password_length" json:"password_length"`
+	} `yaml:"realm" json:"realm"`
 	Identities struct {
-		Principals        []string           `yaml:"principals"`
-		ServicePrincipals []ServicePrincipal `yaml:"service_principals"`
-	} `yaml:"identities"`
+		Principals        []string           `yaml:"principals" json:"principals"`
+		ServicePrincipals []ServicePrincipal `yaml:"service_principals" json:"service_principals"`
+	} `yaml:"identities" json:"identities"`
 }
 
 type ServicePrincipal struct {
-	Name   		string `yaml:"name"`
-	Password	string `yaml:"password"`
+	Name   		string `yaml:"name" json:"name"`
+	Password	string `yaml:"password" json:"-"`
 }
 
 // NewConfig takes a .yml filename from the same /config directory, and returns a populated configuration
@@ -50,4 +52,25 @@ func NewConfig(s string) Config {
 	}
 
 	return cfg
+}
+
+func (conf *Config) ConfigHandler(w http.ResponseWriter, r *http.Request) {
+	// FIXME move CORS URLs to config
+	// check CORS headers
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == http.MethodOptions {
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+        return
+    }
+
+	// return JSON representation of client id store
+	w.Header().Set("Content-Type", "application/json")
+
+	content, err := json.Marshal(conf)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Fatal(err)
+	}
+
+	w.Write(content)
 }
