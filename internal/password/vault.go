@@ -335,6 +335,7 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	// return .conf file type
 	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"scorpio.ccache\"")
 
 	// get principal name from request form params
 	// TODO: get principal name from JWT claims instead of form param
