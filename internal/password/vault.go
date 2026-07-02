@@ -357,18 +357,19 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// log in
-	login := client.NewClientWithPassword(principal, "SCORPIO.IO", password, vault.krb5)
+	// FIXME
+	login := client.NewClientWithPassword(principal, "KRB.SCORPIO.ORDINARYCOMPUTING.COM", password, vault.krb5)
 
 	// old way: r.Header.Get("subject")
 	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, principal)
 
-	message, err := messages.NewASReqForTGT("SCORPIO.IO", vault.krb5, cname)
+	message, err := messages.NewASReqForTGT("KRB.SCORPIO.ORDINARYCOMPUTING.COM", vault.krb5, cname)
 	if err != nil{
 		log.Fatalf("%v", err)
 	}
 
 	// TODO: add realm to config.go
-	tgt, err := login.ASExchange("SCORPIO.IO", message, 1)
+	tgt, err := login.ASExchange("KRB.SCORPIO.ORDINARYCOMPUTING.COM", message, 1)
 	if err != nil{
 		log.Fatalf("%v", err)
 	}
