@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/jcmturner/gokrb5/v8/keytab"
 	"github.com/scorpio-id/kerberos/internal/client"
 	"github.com/scorpio-id/kerberos/internal/config"
+	"github.com/scorpio-id/kerberos/internal/credentials"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
 	"github.com/scorpio-id/kerberos/internal/messages"
 	"github.com/scorpio-id/kerberos/internal/metadata"
@@ -53,7 +55,7 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 	return vault, nil
 }
 
-func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
+func (vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 
 	fmt.Println("provisioning default principals!")
 	// create default user principals (such as admin and owner)
@@ -75,7 +77,6 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 
 	return nil
 }
-
 
 func (vault *Vault) CreatePrincipal(principal string) error {
 	// lock & unlock kadmin
@@ -157,7 +158,7 @@ func (vault *Vault) DeletePrincipal(principal string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// remove principal from store
 	vault.store.Delete(principal)
 
@@ -185,7 +186,7 @@ func (vault *Vault) ChangePrincipalPassword(principal string, newpass string) er
 	if err != nil {
 		return err
 	}
-	
+
 	// TODO: update store
 
 	// reset command buffer
@@ -201,14 +202,14 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	// TODO: check if principal exists first
 	decoded, err := hex.DecodeString(vault.store.data[principal].encpass)
 	if err != nil {
-    	fmt.Println("error decoding hex", err)
-    	return "", err
+		fmt.Println("error decoding hex", err)
+		return "", err
 	}
 
 	plaintext, err := vault.store.gcm.Open(nil, decoded[:vault.store.gcm.NonceSize()], decoded[vault.store.gcm.NonceSize():], nil)
 	if err != nil {
-    	fmt.Println("error decrypting ciphertext", err)
-    	return "", err
+		fmt.Println("error decrypting ciphertext", err)
+		return "", err
 	}
 
 	return string(plaintext), nil
@@ -218,7 +219,7 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
 	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
 	// printf "%b" "addent -password -p scorpio/admin@SCORPIO.IO -k 1 -e aes256-cts-hmac-sha1-96\nresetme\nwkt scorpio-test.keytab" | ktutil
-	
+
 	// lock & unlock ktutil
 	vault.mu.Lock()
 	defer vault.mu.Unlock()
@@ -245,7 +246,7 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 		return err
 	}
 
-	// TODO: Permission keytab file correctly 
+	// TODO: Permission keytab file correctly
 	err = os.WriteFile(volume+"/"+filename, generated, 0777)
 	if err != nil {
 		return err
@@ -260,25 +261,25 @@ func (vault *Vault) AuditPrincipals() {
 
 // TODO: Add length and runes to config
 func generatePassword(n int) string {
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = letterRunes[rand.Intn(len(letterRunes))]
-    }
-    return string(b)
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
 
 // Kerberos Principal Swagger Documentation
 //
-// @Summary Manage User & Service Principal KDC identities 
+// @Summary Manage User & Service Principal KDC identities
 // @Description Allows an owner or admin to create & delete Kerberos principals. Principals are the primary identifiers for Kerberos entities (users, devices, & applications)
 // @Tags kerberos
 // @Accept application/x-www-form-urlencoded
 // @Param principal    query string true "must be set to a unique principal name when creating or an existing principal name when deleting"
 //
-// @Success	200 {string} string "OK" 
+// @Success	200 {string} string "OK"
 // @Failure 400 {string} string "Bad Request"
-// @Failure 415 {string} string "Unsupported Media Type" 
-// @Failure 500 {string} string "Internal Server Error" 
+// @Failure 415 {string} string "Unsupported Media Type"
+// @Failure 500 {string} string "Internal Server Error"
 //
 // @Router /krb/principal [post]
 // @Router /krb/principal [delete]
@@ -324,9 +325,9 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 // @Produce application/octet-stream
 // @Param principal    query string true "must be set to existing service principal name"
 //
-// @Success	200 {string} string "OK" 
+// @Success	200 {string} string "OK"
 // @Failure 400 {string} string "Bad Request"
-// @Failure 415 {string} string "Unsupported Media Type" 
+// @Failure 415 {string} string "Unsupported Media Type"
 // @Failure 500 {string} string "Internal Server Error"
 //
 // @Router /krb/tgt [post]
@@ -364,20 +365,82 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, principal)
 
 	message, err := messages.NewASReqForTGT("KRB.SCORPIO.ORDINARYCOMPUTING.COM", vault.krb5, cname)
-	if err != nil{
+	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
 	// TODO: add realm to config.go
 	tgt, err := login.ASExchange("KRB.SCORPIO.ORDINARYCOMPUTING.COM", message, 1)
-	if err != nil{
+	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
+	// TGT bytes
 	bytes, err := tgt.Ticket.Marshal()
-	if err != nil{
+	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	w.Write(bytes)
+	// CREATE CCACHE
+	// https://web.mit.edu/kerberos/krb5-latest/doc/formats/ccache_file_format.html
+
+	// start by creating header field content
+	// header tag field
+	tag, err := strconv.ParseUint("0x0001", 16, 16)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	ftag := uint16(tag)
+
+	// header length field
+	length, err := strconv.ParseUint("0x0004", 16, 16)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	flength := uint16(length)
+
+	// header value field
+	data, err := hex.DecodeString("0x00000000")
+	if err !=nil {
+		log.Fatalf("%v", err)
+	}
+
+	// header field
+	first := credentials.HeaderField {
+		Tag:    ftag,
+		Length: flength,
+		Value:  data,
+	}
+
+	hlength, err := strconv.ParseUint("0x000c", 16, 16)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	headerLength := uint16(hlength)
+
+	// create header
+	header := credentials.Header {
+		Length: headerLength,
+		Fields: []credentials.HeaderField{first},
+	}
+
+	version, err := strconv.ParseUint("0x0504", 16, 16)
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	cversion := uint8(version)
+
+	// TODO finish creating CCache file!
+	ccache := credentials.CCache {
+		Version: cversion,
+		Header:  header,
+
+	}
+
+	// FIXME return correct content
+	 w.Write(bytes)
 }
