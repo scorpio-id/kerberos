@@ -2,6 +2,7 @@ package password
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -376,7 +377,7 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TGT bytes
-	bytes, err := tgt.Ticket.Marshal()
+	tgtbytes, err := tgt.Ticket.Marshal()
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -434,13 +435,50 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 
 	cversion := uint8(version)
 
+	// create Principal struct (using 1 for known name instead of 0 unknown)
+	// TODO check if principal name string needs realm name
+	ptype := types.PrincipalName {
+		NameType: 1,
+		NameString: []string{principal},
+	}
+
+	cprincipal := credentials.Principal {
+		Realm: vault.krb5.LibDefaults.DefaultRealm,
+		PrincipalName: ptype,
+	}
+
+	// create Credential struct (NOTE: server principal is currently empty)
+	ccredential := credentials.Credential {
+		Client: cprincipal,
+		// Server: credentials.Principal{},
+		// Key: types.EncryptionKey{},
+		// AuthTime: time.Now(),
+		// StartTime: time.Now(),
+		// EndTime: time.Now().AddDate(0, 0, 7),
+		// RenewTill: time.Now().AddDate(0, 0, 30),
+		IsSKey: false,
+		Ticket: tgtbytes,
+	}
+
+	// set path
+
 	// TODO finish creating CCache file!
 	ccache := credentials.CCache {
 		Version: cversion,
 		Header:  header,
-
+		DefaultPrincipal: cprincipal,
+		Credentials: []*credentials.Credential{&ccredential},
 	}
 
-	// FIXME return correct content
-	 w.Write(bytes)
+	// convert ccache struct into []byte
+	buff := new(bytes.Buffer)
+	
+	// Write serializes the struct into the buffer
+	err = binary.Write(buff, binary.BigEndian, ccache)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// return ccache binary content as []bytes
+	w.Write(buff.Bytes())
 }
