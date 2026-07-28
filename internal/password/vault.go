@@ -2,7 +2,6 @@ package password
 
 import (
 	"bytes"
-	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -10,19 +9,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/jcmturner/gokrb5/v8/iana/etypeID"
 	"github.com/jcmturner/gokrb5/v8/keytab"
-	"github.com/scorpio-id/kerberos/internal/client"
 	"github.com/scorpio-id/kerberos/internal/config"
-	"github.com/scorpio-id/kerberos/internal/credentials"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
-	"github.com/scorpio-id/kerberos/internal/messages"
 	"github.com/scorpio-id/kerberos/internal/metadata"
-	"github.com/scorpio-id/kerberos/internal/types"
 )
 
 type Vault struct {
@@ -256,6 +250,43 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 	return nil
 }
 
+// GenerateCCacheBytes creates a ccache on disk given a principal.
+// The function creates a keytab, generates a ccache, returns the bytes and deletes
+// the keytab and ccache files on disk.
+func(vault *Vault) GenerateCCacheBytes(service string) ([]byte, error) {
+
+	// generate a keytab for the given principal with unvaulted password
+	err := vault.GenerateKeytab(service, vault.krb5.LibDefaults.DefaultRealm, service + ".keytab", "/tmp")
+	if err != nil {
+		return nil, err
+	}
+
+	// lock the mutex and execute the klist command to create the ccache for the target principal
+	vault.mu.Lock()
+	defer vault.mu.Unlock()
+
+	// TODO review this command, do we need @ default realm?
+	// set up command
+	vault.cmd = exec.Command("kinit", "-k", "-t", "/tmp/" + service + ".keytab", "-c", "/tmp/" + service + ".ccache", service + "@" + vault.krb5.LibDefaults.DefaultRealm)
+	var out bytes.Buffer
+	vault.cmd.Stdout = &out
+
+	// execute command
+	err = vault.cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	// read the ccache file from disk and return the contents as a []byte
+	bytes, err := os.ReadFile("/tmp/" + service + ".ccache")
+
+	// delete the local files (keytab & ccache)
+	os.Remove("/tmp/" + service + ".keytab")
+	os.Remove("/tmp/" + service + ".ccache")
+
+	return bytes, nil
+}
+
 func (vault *Vault) AuditPrincipals() {
 	// TODO implement, use kadmin to list princs and reconcile with store
 }
@@ -352,134 +383,10 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	// start by retrieving password
-	password, err := vault.RetrievePassword(principal)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	// log in
-	// FIXME
-	login := client.NewClientWithPassword(principal, "KRB.SCORPIO.ORDINARYCOMPUTING.COM", password, vault.krb5)
-
-	// old way: r.Header.Get("subject")
-	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, principal)
-
-	message, err := messages.NewASReqForTGT("KRB.SCORPIO.ORDINARYCOMPUTING.COM", vault.krb5, cname)
+	bytes, err := vault.GenerateCCacheBytes(principal)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	// TODO: add realm to config.go
-	tgt, err := login.ASExchange("KRB.SCORPIO.ORDINARYCOMPUTING.COM", message, 1)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	// TGT bytes
-	tgtbytes, err := tgt.Ticket.Marshal()
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	// CREATE CCACHE
-	// https://web.mit.edu/kerberos/krb5-latest/doc/formats/ccache_file_format.html
-
-	// start by creating header field content
-	// header tag field
-	tag, err := strconv.ParseInt("0x0001", 0, 32)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	ftag := uint16(tag)
-
-	// header length field
-	length, err := strconv.ParseInt("0x0004", 0, 32)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	flength := uint16(length)
-
-	// header value field
-	data, err := hex.DecodeString("00000000")
-	if err !=nil {
-		log.Fatalf("%v", err)
-	}
-
-	// header field
-	first := credentials.HeaderField {
-		Tag:    ftag,
-		Length: flength,
-		Value:  data,
-	}
-
-	hlength, err := strconv.ParseInt("0x000c", 0, 32)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	headerLength := uint16(hlength)
-
-	// create header
-	header := credentials.Header {
-		Length: headerLength,
-		Fields: []credentials.HeaderField{first},
-	}
-
-	version, err := strconv.ParseInt("0x0504", 0, 32)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	cversion := uint8(version)
-
-	// create Principal struct (using 1 for known name instead of 0 unknown)
-	// TODO check if principal name string needs realm name
-	ptype := types.PrincipalName {
-		NameType: 1,
-		NameString: []string{principal},
-	}
-
-	cprincipal := credentials.Principal {
-		Realm: vault.krb5.LibDefaults.DefaultRealm,
-		PrincipalName: ptype,
-	}
-
-	// create Credential struct (NOTE: server principal is currently empty)
-	ccredential := credentials.Credential {
-		Client: cprincipal,
-		// Server: credentials.Principal{},
-		// Key: types.EncryptionKey{},
-		// AuthTime: time.Now(),
-		// StartTime: time.Now(),
-		// EndTime: time.Now().AddDate(0, 0, 7),
-		// RenewTill: time.Now().AddDate(0, 0, 30),
-		IsSKey: false,
-		Ticket: tgtbytes,
-	}
-
-	// set path
-
-	// TODO finish creating CCache file!
-	ccache := credentials.CCache {
-		Version: cversion,
-		Header:  header,
-		DefaultPrincipal: cprincipal,
-		Credentials: []*credentials.Credential{&ccredential},
-	}
-
-	// use encoding/gob to convert struct to []byte
-	// convert ccache struct into []byte
-	buff := new(bytes.Buffer)
-	enc := gob.NewEncoder(buff)
-	
-	err = enc.Encode(ccache)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// return ccache binary content as []bytes
-	w.Write(buff.Bytes())
+	w.Write(bytes)
 }
