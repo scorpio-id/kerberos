@@ -2,7 +2,7 @@ package password
 
 import (
 	"bytes"
-	"encoding/binary"
+	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -470,11 +470,12 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 		Credentials: []*credentials.Credential{&ccredential},
 	}
 
+	// use encoding/gob to convert struct to []byte
 	// convert ccache struct into []byte
 	buff := new(bytes.Buffer)
+	enc := gob.NewEncoder(buff)
 	
-	// Write serializes the struct into the buffer
-	err = binary.Write(buff, binary.BigEndian, ccache)
+	err = enc.Encode(ccache)
 	if err != nil {
 		log.Fatal(err)
 	}
