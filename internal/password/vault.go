@@ -403,7 +403,7 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	flength := uint16(length)
 
 	// header value field
-	data, err := hex.DecodeString("0x00000000")
+	data, err := hex.DecodeString("00000000")
 	if err !=nil {
 		log.Fatalf("%v", err)
 	}
