@@ -387,7 +387,7 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 
 	// start by creating header field content
 	// header tag field
-	tag, err := strconv.ParseUint("0x0001", 16, 16)
+	tag, err := strconv.ParseUint("0x0001", 0, 32)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -395,7 +395,7 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	ftag := uint16(tag)
 
 	// header length field
-	length, err := strconv.ParseUint("0x0004", 16, 16)
+	length, err := strconv.ParseUint("0x0004", 0, 32)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -415,7 +415,7 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 		Value:  data,
 	}
 
-	hlength, err := strconv.ParseUint("0x000c", 16, 16)
+	hlength, err := strconv.ParseUint("0x000c", 0, 32)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
@@ -428,7 +428,7 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 		Fields: []credentials.HeaderField{first},
 	}
 
-	version, err := strconv.ParseUint("0x0504", 16, 16)
+	version, err := strconv.ParseUint("0x0504", 0, 32)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
