@@ -3,20 +3,26 @@ package transport
 import (
 	"log"
 	"net/http"
+	"runtime"
 
 	"github.com/gorilla/mux"
-	"github.com/swaggo/http-swagger/v2"
 	_ "github.com/scorpio-id/kerberos/docs"
+	"github.com/swaggo/http-swagger/v2"
 
 	"github.com/scorpio-id/kerberos/internal/config"
+	"github.com/scorpio-id/kerberos/internal/data"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
 	"github.com/scorpio-id/kerberos/internal/password"
+	"github.com/scorpio-id/kerberos/internal/tls"
 )
 
 // NewRouter creates a new mux router with applied server
 func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 
 	router := mux.NewRouter()
+
+	persistClient := data.NewPersistenceClient(cfg)
+
 
 	// adding swagger 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
@@ -65,6 +71,20 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 		}
 
 		subr.Use(om.Middleware)
+	}
+
+	// check if TLS is enabled, if so create cert client and serialize x509 if on linux OS
+	if runtime.GOOS == "linux" {
+		content, err := persistClient.LoadWebPKCS12()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// serialize PKCS12 for SSL
+		err = tls.SerializePKCS12(content, "/etc/ssl/certs")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	return router
