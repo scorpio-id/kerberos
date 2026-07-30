@@ -46,6 +46,18 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 	subr.HandleFunc("/tgt", vault.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
 	subr.HandleFunc("/principal", vault.PrincipalHandler).Methods(http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodOptions)
 
+	// create subrouter for CORS-enabled UIs
+	uisubr := router.PathPrefix("/ui").Subrouter()
+
+	// config endpoint for console
+	uisubr.HandleFunc("/config", cfg.ConfigHandler).Methods(http.MethodGet, http.MethodOptions)
+
+	// metadata endpoint for console UI
+	uisubr.HandleFunc("/metadata", vault.MetadataHandler).Methods(http.MethodGet, http.MethodOptions)
+
+	// enable CORS 
+	uisubr.Use(mux.CORSMethodMiddleware(uisubr))
+
 	// apply OAuth middleware if enabled
 	if cfg.OAuth.Enabled {
 		om := OAuthMiddleware{

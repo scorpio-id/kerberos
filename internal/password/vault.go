@@ -14,15 +14,14 @@ import (
 
 	"github.com/jcmturner/gokrb5/v8/iana/etypeID"
 	"github.com/jcmturner/gokrb5/v8/keytab"
-	"github.com/scorpio-id/kerberos/internal/client"
 	"github.com/scorpio-id/kerberos/internal/config"
 	"github.com/scorpio-id/kerberos/internal/krb5conf"
-	"github.com/scorpio-id/kerberos/internal/messages"
-	"github.com/scorpio-id/kerberos/internal/types"
+	"github.com/scorpio-id/kerberos/internal/metadata"
 )
 
 type Vault struct {
 	store    *Store
+	metadata *metadata.Store
 	password string
 	plength  int
 	krb5     *krb5conf.Krb5Config
@@ -36,8 +35,12 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 		return nil, err
 	}
 
+	// create metadata store
+	principals := metadata.NewStore()
+
 	vault := &Vault{
 		store:    store,
+		metadata: principals,
 		password: password,
 		plength:  cfg.Realm.PasswordLength,
 		krb5:     krb5,
@@ -47,7 +50,7 @@ func NewVault(cfg config.Config, krb5 *krb5conf.Krb5Config, password string) (*V
 	return vault, nil
 }
 
-func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
+func (vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 
 	fmt.Println("provisioning default principals!")
 	// create default user principals (such as admin and owner)
@@ -66,18 +69,9 @@ func(vault *Vault) ProvisionDefaultPrincipals(cfg config.Config) error {
 			return err
 		}
 	}
-	
-	// generate keytabs for service principals to enable SPNEGO on startup
-	// for _, service := range cfg.Identities.ServicePrincipals {
-	// 	err := vault.GenerateKeytab(service.Name, cfg.Realm.Name, service.Keytab, cfg.Server.Volume)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	return nil
 }
-
 
 func (vault *Vault) CreatePrincipal(principal string) error {
 	// lock & unlock kadmin
@@ -101,6 +95,10 @@ func (vault *Vault) CreatePrincipal(principal string) error {
 	// stores the principal with metadata
 	// FIXME: accept clientID
 	vault.store.Add("scorpio", principal, password)
+
+	// FIXME determine if principal is service or user principal
+	a := metadata.NewAccount(principal, vault.krb5.LibDefaults.DefaultTGSEnctypes[0], true)
+	vault.metadata.Add(a)
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
@@ -128,6 +126,11 @@ func (vault *Vault) CreatePrincipalWithPassword(principal, password string) erro
 	// FIXME: accept clientID
 	vault.store.Add("scorpio", principal, password)
 
+	// add account to metadata principal store for admin API
+	// FIXME determine if principal is service or user principal
+	a := metadata.NewAccount(principal, vault.krb5.LibDefaults.DefaultTGSEnctypes[0], true)
+	vault.metadata.Add(a)
+
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
 
@@ -150,9 +153,12 @@ func (vault *Vault) DeletePrincipal(principal string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	// remove principal from store
 	vault.store.Delete(principal)
+
+	// remove principal from metadata
+	vault.metadata.Delete(principal)
 
 	// reset command buffer
 	vault.cmd = &exec.Cmd{}
@@ -175,7 +181,7 @@ func (vault *Vault) ChangePrincipalPassword(principal string, newpass string) er
 	if err != nil {
 		return err
 	}
-	
+
 	// TODO: update store
 
 	// reset command buffer
@@ -191,14 +197,14 @@ func (vault *Vault) RetrievePassword(principal string) (string, error) {
 	// TODO: check if principal exists first
 	decoded, err := hex.DecodeString(vault.store.data[principal].encpass)
 	if err != nil {
-    	fmt.Println("error decoding hex", err)
-    	return "", err
+		fmt.Println("error decoding hex", err)
+		return "", err
 	}
 
 	plaintext, err := vault.store.gcm.Open(nil, decoded[:vault.store.gcm.NonceSize()], decoded[vault.store.gcm.NonceSize():], nil)
 	if err != nil {
-    	fmt.Println("error decrypting ciphertext", err)
-    	return "", err
+		fmt.Println("error decrypting ciphertext", err)
+		return "", err
 	}
 
 	return string(plaintext), nil
@@ -208,7 +214,7 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 	// TODO - use ktutil command to generate keytabs for service principals (NOT principals)
 	// https://www.ibm.com/docs/en/pasc/1.1?topic=file-creating-kerberos-principal-keytab
 	// printf "%b" "addent -password -p scorpio/admin@SCORPIO.IO -k 1 -e aes256-cts-hmac-sha1-96\nresetme\nwkt scorpio-test.keytab" | ktutil
-	
+
 	// lock & unlock ktutil
 	vault.mu.Lock()
 	defer vault.mu.Unlock()
@@ -235,7 +241,7 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 		return err
 	}
 
-	// TODO: Permission keytab file correctly 
+	// TODO: Permission keytab file correctly
 	err = os.WriteFile(volume+"/"+filename, generated, 0777)
 	if err != nil {
 		return err
@@ -244,27 +250,68 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 	return nil
 }
 
+// GenerateCCacheBytes creates a ccache on disk given a principal.
+// The function creates a keytab, generates a ccache, returns the bytes and deletes
+// the keytab and ccache files on disk.
+func(vault *Vault) GenerateCCacheBytes(service string) ([]byte, error) {
+
+	// generate a keytab for the given principal with unvaulted password
+	err := vault.GenerateKeytab(service, vault.krb5.LibDefaults.DefaultRealm, service + ".keytab", "/tmp")
+	if err != nil {
+		return nil, err
+	}
+
+	// lock the mutex and execute the klist command to create the ccache for the target principal
+	vault.mu.Lock()
+	defer vault.mu.Unlock()
+
+	// TODO review this command, do we need @ default realm?
+	// set up command
+	vault.cmd = exec.Command("kinit", "-k", "-t", "/tmp/" + service + ".keytab", "-c", "/tmp/" + service + ".ccache", service + "@" + vault.krb5.LibDefaults.DefaultRealm)
+	var out bytes.Buffer
+	vault.cmd.Stdout = &out
+
+	// execute command
+	err = vault.cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	// read the ccache file from disk and return the contents as a []byte
+	bytes, err := os.ReadFile("/tmp/" + service + ".ccache")
+
+	// delete the local files (keytab & ccache)
+	os.Remove("/tmp/" + service + ".keytab")
+	os.Remove("/tmp/" + service + ".ccache")
+
+	return bytes, nil
+}
+
+func (vault *Vault) AuditPrincipals() {
+	// TODO implement, use kadmin to list princs and reconcile with store
+}
+
 // TODO: Add length and runes to config
 func generatePassword(n int) string {
-    b := make([]rune, n)
-    for i := range b {
-        b[i] = letterRunes[rand.Intn(len(letterRunes))]
-    }
-    return string(b)
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }
 
 // Kerberos Principal Swagger Documentation
 //
-// @Summary Manage User & Service Principal KDC identities 
+// @Summary Manage User & Service Principal KDC identities
 // @Description Allows an owner or admin to create & delete Kerberos principals. Principals are the primary identifiers for Kerberos entities (users, devices, & applications)
 // @Tags kerberos
 // @Accept application/x-www-form-urlencoded
 // @Param principal    query string true "must be set to a unique principal name when creating or an existing principal name when deleting"
 //
-// @Success	200 {string} string "OK" 
+// @Success	200 {string} string "OK"
 // @Failure 400 {string} string "Bad Request"
-// @Failure 415 {string} string "Unsupported Media Type" 
-// @Failure 500 {string} string "Internal Server Error" 
+// @Failure 415 {string} string "Unsupported Media Type"
+// @Failure 500 {string} string "Internal Server Error"
 //
 // @Router /krb/principal [post]
 // @Router /krb/principal [delete]
@@ -310,9 +357,9 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 // @Produce application/octet-stream
 // @Param principal    query string true "must be set to existing service principal name"
 //
-// @Success	200 {string} string "OK" 
+// @Success	200 {string} string "OK"
 // @Failure 400 {string} string "Bad Request"
-// @Failure 415 {string} string "Unsupported Media Type" 
+// @Failure 415 {string} string "Unsupported Media Type"
 // @Failure 500 {string} string "Internal Server Error"
 //
 // @Router /krb/tgt [post]
@@ -321,6 +368,7 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 	// return .conf file type
 	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"scorpio.ccache\"")
 
 	// get principal name from request form params
 	// TODO: get principal name from JWT claims instead of form param
@@ -335,31 +383,8 @@ func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
-	// start by retrieving password
-	password, err := vault.RetrievePassword(principal)
+	bytes, err := vault.GenerateCCacheBytes(principal)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	// log in
-	login := client.NewClientWithPassword(principal, "SCORPIO.IO", password, vault.krb5)
-
-	// old way: r.Header.Get("subject")
-	cname := types.NewPrincipalName(types.KRB_NT_SRV_INST, principal)
-
-	message, err := messages.NewASReqForTGT("SCORPIO.IO", vault.krb5, cname)
-	if err != nil{
-		log.Fatalf("%v", err)
-	}
-
-	// TODO: add realm to config.go
-	tgt, err := login.ASExchange("SCORPIO.IO", message, 1)
-	if err != nil{
-		log.Fatalf("%v", err)
-	}
-
-	bytes, err := tgt.Ticket.Marshal()
-	if err != nil{
 		log.Fatalf("%v", err)
 	}
 

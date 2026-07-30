@@ -16,11 +16,11 @@ realm:
 
 identities:
   principals:
-    - scorpio/admin@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - scorpio/admin
   service_principals:
-    - name: scorpio-oauth@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: scorpio-oauth
       password: move-to-kube-secrets-1111
-    - name: HTTP/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: HTTP/ca.scorpio.ordinarycomputing.com
       password: move-to-kube-secrets-2222
-    - name: HTTPS/idp.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM
+    - name: scorpio-ui
       password: move-to-kube-secrets-3333
