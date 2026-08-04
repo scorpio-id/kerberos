@@ -7,7 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/scorpio-id/kerberos/docs"
-	"github.com/swaggo/http-swagger/v2"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"github.com/scorpio-id/kerberos/internal/config"
 	"github.com/scorpio-id/kerberos/internal/data"
@@ -23,15 +23,13 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 
 	persistClient := data.NewPersistenceClient(cfg)
 
-
-	// adding swagger 
+	// adding swagger
 	router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-		httpSwagger.URL("http://krb.scorpio.ordinarycomputing.com:" + cfg.Server.Port + "/swagger/doc.json"),
+		httpSwagger.URL("http://krb.scorpio.ordinarycomputing.com:"+cfg.Server.Port+"/swagger/doc.json"),
 		httpSwagger.DeepLinking(true),
 		httpSwagger.DocExpansion("none"),
 		httpSwagger.DomID("swagger-ui"),
 	)).Methods(http.MethodGet)
-
 
 	// must have access to kadmin
 	// TODO: remove plaintext password
@@ -49,7 +47,7 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 	subr := router.PathPrefix("/krb").Subrouter()
 
 	subr.HandleFunc("/conf", krb5.Krb5ConfHandler).Methods(http.MethodGet, http.MethodOptions)
-	subr.HandleFunc("/tgt", vault.Krb5TGTHandler).Methods(http.MethodPost, http.MethodOptions)
+	subr.HandleFunc("/ccache", vault.Krb5CCacheHandler).Methods(http.MethodPost, http.MethodOptions)
 	subr.HandleFunc("/principal", vault.PrincipalHandler).Methods(http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodOptions)
 
 	// create subrouter for CORS-enabled UIs
@@ -61,7 +59,7 @@ func NewRouter(cfg config.Config, krb5 *krb5conf.Krb5Config) *mux.Router {
 	// metadata endpoint for console UI
 	uisubr.HandleFunc("/metadata", vault.MetadataHandler).Methods(http.MethodGet, http.MethodOptions)
 
-	// enable CORS 
+	// enable CORS
 	uisubr.Use(mux.CORSMethodMiddleware(uisubr))
 
 	// apply OAuth middleware if enabled

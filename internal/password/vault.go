@@ -253,10 +253,10 @@ func (vault *Vault) GenerateKeytab(service, realm, filename, volume string) erro
 // GenerateCCacheBytes creates a ccache on disk given a principal.
 // The function creates a keytab, generates a ccache, returns the bytes and deletes
 // the keytab and ccache files on disk.
-func(vault *Vault) GenerateCCacheBytes(service string) ([]byte, error) {
+func (vault *Vault) GenerateCCacheBytes(service string) ([]byte, error) {
 
 	// generate a keytab for the given principal with unvaulted password
-	err := vault.GenerateKeytab(service, vault.krb5.LibDefaults.DefaultRealm, service + ".keytab", "/tmp")
+	err := vault.GenerateKeytab(service, vault.krb5.LibDefaults.DefaultRealm, service+".keytab", "/tmp")
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func(vault *Vault) GenerateCCacheBytes(service string) ([]byte, error) {
 
 	// TODO review this command, do we need @ default realm?
 	// set up command
-	vault.cmd = exec.Command("kinit", "-k", "-t", "/tmp/" + service + ".keytab", "-c", "/tmp/" + service + ".ccache", service + "@" + vault.krb5.LibDefaults.DefaultRealm)
+	vault.cmd = exec.Command("kinit", "-k", "-t", "/tmp/"+service+".keytab", "-c", "/tmp/"+service+".ccache", service+"@"+vault.krb5.LibDefaults.DefaultRealm)
 	var out bytes.Buffer
 	vault.cmd.Stdout = &out
 
@@ -348,10 +348,10 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// KRB5 Ticket Granting Ticket (TGT) Swagger Documentation
+// KRB5 Credential Cache (CCache) Swagger Documentation
 //
-// @Summary Generates a principal TGT given an OAuth JWT with matching subject claim
-// @Description Ticket Granting Tickets (TGTs) are used by Kerberos clients to obtain Service Tickets (STs) when performing a Ticket Granting Server (TGS) exchange with the KDC.
+// @Summary Generates a Principal CCache given an OAuth JWT with matching subject claim
+// @Description CCaches contain a Ticket-Granting-Ticket (TGT) and are used by Kerberos clients to obtain Service Tickets (STs) when performing a Ticket Granting Server (TGS) exchange with the KDC.
 // @Tags kerberos
 // @Accept application/x-www-form-urlencoded
 // @Produce application/octet-stream
@@ -362,10 +362,10 @@ func (vault *Vault) PrincipalHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 415 {string} string "Unsupported Media Type"
 // @Failure 500 {string} string "Internal Server Error"
 //
-// @Router /krb/tgt [post]
+// @Router /krb/ccache [post]
 //
-// Krb5TGTHandler as described in https://web.mit.edu/kerberos/krb5-1.12/doc/basic/ccache_def.html
-func (vault *Vault) Krb5TGTHandler(w http.ResponseWriter, r *http.Request) {
+// Krb5CCacheHandler as described in https://web.mit.edu/kerberos/krb5-1.12/doc/basic/ccache_def.html
+func (vault *Vault) Krb5CCacheHandler(w http.ResponseWriter, r *http.Request) {
 	// return .conf file type
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"scorpio.ccache\"")
