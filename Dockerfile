@@ -1,4 +1,4 @@
-FROM golang:latest as builder
+FROM golang:latest AS builder
 WORKDIR /workspace
 
 # Copy the Go Modules manifests
