@@ -24,3 +24,27 @@ identities:
       password: move-to-kube-secrets-2222
     - name: scorpio-ui
       password: move-to-kube-secrets-3333
+    - name: scorpio-kerberos
+      password: move-to-kube-secrets-4444
+
+# SPNEGO configurations
+spnego:
+  realm: "KRB.SCORPIO.ORDINARYCOMPUTING.COM"
+  service_principal_name: "scorpio-kerberos"
+  password: "move-to-kube-secrets-4444"
+
+# PKI configuration
+pki:
+  endpoint: "http://ca.scorpio.ordinarycomputing.com/spnego"
+  service_principal_name: "HTTP/ca.scorpio.ordinarycomputing.com@KRB.SCORPIO.ORDINARYCOMPUTING.COM"
+  sans:
+    - "krb.scorpio.ordinarycomputing.com"
+
+# redis configurations
+persistence:
+  enabled: true
+  host: "db-valkey-nyc1-scorpio-do-user-16782644-0.l.db.ondigitalocean.com"
+  port: 25061
+  user: "default"
+  path: "/etc/scorpio-secret/password"
+  database: 4
